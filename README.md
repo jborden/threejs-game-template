@@ -4,6 +4,8 @@ A Leiningen template for creating [three.js](https://github.com/mrdoob/three.js)
 
 ## Usage
 
+This template is heavily based on the work done by Rohit Aggarwal on [electron-template](https://github.com/ducky427/electron-template)
+
 Create a new application project:
 
 ```
