@@ -1,5 +1,7 @@
 (ns {{project-ns}}.game-loop)
 
+(def request-id nil)
+
 (defn request-animation-frame
   "Call the function callback with previous-time"
   [callback previous-time]

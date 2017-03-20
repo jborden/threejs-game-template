@@ -3,6 +3,7 @@
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.494"]
+                 [cljsjs/three "0.0.84-0"]
                  [weasel "0.7.0" :exclusions [org.clojure/clojurescript]]
                  [reagent "0.6.1"]]
   :plugins [[lein-cljsbuild "1.1.5"]]
@@ -13,7 +14,7 @@
                         :source-paths ["src"]
                         :compiler {
                                    :main {{name}}.core
-                                   :output-to "out/{{sanitized}}.js"
+                                   :output-to "resources/public/js/{{sanitized}}.js"
                                    :output-dir "out"
                                    :optimizations :none
                                    :pretty-print true
