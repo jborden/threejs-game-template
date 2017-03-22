@@ -29,4 +29,31 @@
   (aset key-state (or (.-keycode event)
                       (.-which event)) false))
 
+(defn controls-handler
+  "Handle user input. The inputs to this fn will change based on context"
+  [{:keys [left-fn up-fn right-fn down-fn space-fn]}]
+  ;; cond/condp won't work because you have to account for when two keys
+  ;; are held simultaneously!
+  ;; NOTE: Camera is currently floating above xy plane, these controls will have
+  ;; to be adjusted when the camera is looking down the x-y plane
+  ;; left
+  (if (or (aget key-state left-arrow)
+          (aget key-state a-key))
+    (left-fn))
+  ;; up
+  (if (or (aget key-state up-arrow)
+          (aget key-state w-key))
+    (up-fn))
+  ;; right
+  (if (or (aget key-state right-arrow)
+          (aget key-state d-key))
+    (right-fn))
+  ;; down
+  (if (or (aget key-state down-arrow)
+          (aget key-state s-key))
+    (down-fn))
+  ;; space
+  (if (aget key-state space-key)
+    (space-fn)))
+
 
