@@ -25,7 +25,9 @@
              ["src/cljs/{{sanitized}}/dev.cljs" (render "src/cljs/dev.cljs" data)]
              ["src/cljs/{{sanitized}}/game_loop.cljs" (render "src/cljs/game_loop.cljs" data)]
 
+             ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]
              ["index.html" (render "index.html" data)]
+             ["index_release.html" (render "index_release.html" data)]
              ["server.js" (render "server.js" data)]
 
              )))

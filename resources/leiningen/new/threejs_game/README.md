@@ -37,3 +37,23 @@ The fighweel repl will connect after the url is loaded in the browser.
 
 The file src/cljs/dev.cljs contains on-jsload function that figwheel calls each time it detects a file change in src/cljs.
 
+## Production release compilation
+
+To compile the code for a production release
+```bash
+$ lein cljsbuild once release
+```
+
+To test that it works, start up the node server. Point your browser to the index_release.html file
+ex: http://localhost:8000/index_release.html
+
+### Errors related to Name Mangling
+
+A common source of errors in advanced compilation is related to issues with name mangling of object property and method names.
+Though the cljsjs/three package comes with externs, they are not exhaustive. If you are using a property or method not listed at
+https://github.com/cljsjs/packages/blob/master/three/resources/cljsjs/three/common/three.ext.js, you will need to add it to the
+src/js/{{sanitized}}.externs.js file. There is a caveat, however. Because the extern file mentioned above already declares the
+var THREE, you will need to append your property and method names to this var instead of creating a new THREE var as is typically suggested
+in online cljs tutorials. The provided externs files has examples of doing this using methods and properties that are used by this project
+but are not included in cljsjs/three externs.
+
