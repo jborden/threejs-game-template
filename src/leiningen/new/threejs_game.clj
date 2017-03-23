@@ -26,8 +26,8 @@
              ["src/cljs/{{sanitized}}/game_loop.cljs" (render "src/cljs/game_loop.cljs" data)]
 
              ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]
-             ["index.html" (render "index.html" data)]
-             ["index_release.html" (render "index_release.html" data)]
-             ["server.js" (render "server.js" data)]
+             ["resources/public/index.html" (render "resources/public/index.html" data)]
+             ["resources/public/index_release.html" (render "resources/public/index_release.html" data)]
+             ["resources/public/server.js" (render "resources/public/server.js" data)]
 
              )))

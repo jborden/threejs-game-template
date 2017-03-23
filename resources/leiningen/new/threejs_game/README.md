@@ -19,7 +19,7 @@ $ lein cljsbuild once dev
 
 Run the node server:
 ```bash
-$ node server.js
+$ node resources/public/server.js
 ```
 
 Point your browser to the url indicated on the command line.

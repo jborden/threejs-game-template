@@ -1,7 +1,6 @@
 (ns {{project-ns}}.core
     (:require [reagent.core :as r]
               [cljsjs.three]
-              [weasel.repl :as repl]
               [{{project-ns}}.display :as display]
               [{{project-ns}}.game-loop :as game-loop]
               [{{project-ns}}.controls :as controls]))
@@ -25,12 +24,6 @@
       (moveDown [this]
         (.translateY mesh (- move-increment)))
       (getMesh [this] mesh))))
-
-;; likely need to take this out below
-;; (defn main-loop-fn
-;;   [delta-t]
-;; ()
-;;   )
 
 (defn ^:export init
   "Function to setup and start the game"
