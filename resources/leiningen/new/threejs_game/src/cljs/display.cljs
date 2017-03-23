@@ -30,12 +30,16 @@
                    (+ x (nth delta 0))
                    (+ y (nth delta 1))
                    (+ z (nth delta 2)))))
+
+;; sometimes there are issues with specific chrome builds
+;; and you will get the console error
+;; THREE.WebGLRenderer: Error creating WebGL context.
+;; see: https://github.com/mrdoob/three.js/issues/9936
+;; check GPU support: chrome://gpu
+;; possible fix is to simply update Chrome by visiting chrome://help
 (defn create-renderer
   []
-  (let [renderer
-        (if (.-webgl js/Detector)
-          (js/THREE.WebGLRenderer. (js-obj "antialias" true))
-          (js/THREE.CanvasRender.))]
+  (let [renderer (js/THREE.WebGLRenderer. (clj->js {:antialias true}))]
     (.setSize renderer
               (.-innerWidth js/window)
               (.-innerHeight js/window))
@@ -48,3 +52,4 @@
 (defn attach-renderer!
   "Attach renderer to container with div-id"
   [renderer container]
+  (.appendChild container (.-domElement renderer)))

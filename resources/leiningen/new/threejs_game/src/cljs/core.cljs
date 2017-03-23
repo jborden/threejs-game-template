@@ -2,21 +2,24 @@
     (:require [reagent.core :as r]
               [cljsjs.three]
               [weasel.repl :as repl]
-              [{{project.ns}}.display :as display]
-              [{{project.ns}}.game-loop :as game-loop]))
+              [{{project-ns}}.display :as display]
+              [{{project-ns}}.game-loop :as game-loop]
+              [{{project-ns}}.controls :as controls]))
+
+(def state (atom nil))
 
 (defn hero
   []
   (let [material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xFF0000}))
-        geometry (js/THREE.PlaneGeometry. 2 1)
+        geometry (js/THREE.PlaneGeometry. 200 200 1)
         mesh (js/THREE.Mesh. geometry material)
         move-increment 5]
     (reify
       Object
       (moveLeft [this]
-        (.translateX mesh move-increment))
-      (moveRight [this]
         (.translateX mesh (- move-increment)))
+      (moveRight [this]
+        (.translateX mesh move-increment))
       (moveUp [this]
         (.translateY mesh move-increment))
       (moveDown [this]
@@ -35,19 +38,20 @@
   (let [scene (js/THREE.Scene.)
         camera (display/init-camera!
                 (display/create-perspective-camera
-                 75
+                 45
                  (/ (.-innerWidth js/window)
                     (.-innerHeight js/window))
-                 1
-                 1000)
+                 0.1
+                 20000)
                 scene
-                [0 0 0])
+                [0 0 1300])
         renderer (display/create-renderer)
         render (display/render renderer scene camera)
+        request-id (atom nil)
         container (-> js/document
                       (.getElementById "game-container"))
         hero (hero)]
-
+    (swap! state assoc :hero hero :request-id request-id)
     (display/attach-renderer! renderer container)
     (.add scene (.getMesh hero))
     ;; initialize listeners
@@ -62,4 +66,5 @@
          :right-fn #(.moveRight hero)
          :up-fn #(.moveUp hero)
          :down-fn #(.moveDown hero)
-         :space-fn #(false)})))))
+         :space-fn #(false)}))
+     request-id)))

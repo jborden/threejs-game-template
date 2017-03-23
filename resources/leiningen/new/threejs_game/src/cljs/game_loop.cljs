@@ -1,7 +1,5 @@
 (ns {{project-ns}}.game-loop)
 
-(def request-id nil)
-
 (defn request-animation-frame
   "Call the function callback with previous-time"
   [callback previous-time]
@@ -26,23 +24,23 @@
                        (fn [delta-t]
                          (do (render)
                              (controls/controls-handler camera)))) nil)"
-  [f & [chi]]
+  [f request-id & [chi]]
   (fn [current-time previous-time]
     (let [previous-time (if (= previous-time nil)
                           current-time
                           previous-time)
           delta-t  (- current-time previous-time) ;  Δt
-          chi (or chi 1) ; Χ, after Χρόνος aka chronos
+          chi (or chi 1)                ; Χ, after Χρόνος aka chronos
           ]
       (f (* delta-t chi))
       (cond
         :else
-        (set! request-id (request-animation-frame
-                          (time-frame-loop f chi) current-time))))))
+        (reset! request-id (request-animation-frame
+                            (time-frame-loop f request-id chi) current-time))))))
 
 (defn start-time-frame-loop
   "Start time-frame-loop using f, keeping track of the request-id of
   requestAnimationFrame in the request-id atom. chi is optional.
   See time-frame-loop for a description of f and chi."
   [f request-id & [chi]]
-  (reset! request-id (request-animation-frame (time-frame-loop f chi) nil)))
+  (reset! request-id (request-animation-frame (time-frame-loop f request-id chi) nil)))

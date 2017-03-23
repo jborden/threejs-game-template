@@ -15,14 +15,14 @@
                         :compiler {
                                    :main {{name}}.core
                                    :output-to "resources/public/js/{{sanitized}}.js"
-                                   :output-dir "out"
+                                   :output-dir "resources/public/js/out"
                                    :optimizations :none
                                    :pretty-print true
                                    :source-map true}}
                        {:id "release"
                         :source-paths ["src"]
                         :compiler {
-                                   :main {{name}} .core
+                                   :main {{name}}.core
                                    :output-to "release/{{sanitized}}.min.js"
                                    :optimizations :advanced
                                    :pretty-print false
