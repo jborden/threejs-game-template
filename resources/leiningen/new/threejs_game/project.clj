@@ -6,12 +6,14 @@
                  [cljsjs/three "0.0.84-0"]
                  [weasel "0.7.0" :exclusions [org.clojure/clojurescript]]
                  [reagent "0.6.1"]]
-  :plugins [[lein-cljsbuild "1.1.5"]]
+  :plugins [[lein-cljsbuild "1.1.5"]
+            [lein-figwheel "0.5.9"]]
   :npm {:dependencies [[source-map-support "0.4.14"]]}
   :source-paths ["src" "target/classes"]
-  :clean-targets ["out" "release"]
+  :clean-targets ["release"]
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src"]
+                        :figwheel {:on-jsload "{{project-ns}}.dev/on-jsload"}
                         :compiler {
                                    :main {{name}}.core
                                    :output-to "resources/public/js/{{sanitized}}.js"

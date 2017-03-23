@@ -22,5 +22,18 @@ Run the node server:
 $ node server.js
 ```
 
-Point your browser to the port indicated on the command line.
+Point your browser to the url indicated on the command line.
+
+## Figwheel
+
+Figwheel can be used to run the project and to provide a repl
+
+```bash
+$ rlwrap lein figwheel
+```
+
+After figwheel compiles the code, run the node server in another terminal and visit the url indicated on the command line.
+The fighweel repl will connect after the url is loaded in the browser.
+
+The file src/cljs/dev.cljs contains on-jsload function that figwheel calls each time it detects a file change in src/cljs.
 

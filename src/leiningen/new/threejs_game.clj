@@ -7,10 +7,6 @@
 (def render (renderer "threejs-game"))
 
 ;; From: https://github.com/http-kit/lein-template/blob/master/src/leiningen/new/http_kit.clj
-(defn binary [file-name]
-  (let [f     (str/join "/" ["leiningen" "new" "electron" file-name])
-        res   (io/resource f)]
-    (io/input-stream res)))
 
 (defn threejs-game
   [name]
@@ -26,6 +22,7 @@
              ["src/cljs/{{sanitized}}/core.cljs" (render "src/cljs/core.cljs" data)]
              ["src/cljs/{{sanitized}}/controls.cljs" (render "src/cljs/controls.cljs" data)]
              ["src/cljs/{{sanitized}}/display.cljs" (render "src/cljs/display.cljs" data)]
+             ["src/cljs/{{sanitized}}/dev.cljs" (render "src/cljs/dev.cljs" data)]
              ["src/cljs/{{sanitized}}/game_loop.cljs" (render "src/cljs/game_loop.cljs" data)]
 
              ["index.html" (render "index.html" data)]
