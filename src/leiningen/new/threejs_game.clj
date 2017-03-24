@@ -28,6 +28,7 @@
              ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]
              ["resources/public/index.html" (render "resources/public/index.html" data)]
              ["resources/public/index_release.html" (render "resources/public/index_release.html" data)]
+             ["resources/public/css/{{sanitized}}.css" (render "resources/public/css/main.css" data)]
              ["resources/public/server.js" (render "resources/public/server.js" data)]
 
              )))
