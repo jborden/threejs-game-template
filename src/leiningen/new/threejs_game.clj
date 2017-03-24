@@ -21,6 +21,7 @@
 
              ["src/cljs/{{sanitized}}/core.cljs" (render "src/cljs/core.cljs" data)]
              ["src/cljs/{{sanitized}}/controls.cljs" (render "src/cljs/controls.cljs" data)]
+             ["src/cljs/{{sanitized}}/components.cljs" (render "src/cljs/components.cljs" data)]
              ["src/cljs/{{sanitized}}/display.cljs" (render "src/cljs/display.cljs" data)]
              ["src/cljs/{{sanitized}}/dev.cljs" (render "src/cljs/dev.cljs" data)]
              ["src/cljs/{{sanitized}}/game_loop.cljs" (render "src/cljs/game_loop.cljs" data)]

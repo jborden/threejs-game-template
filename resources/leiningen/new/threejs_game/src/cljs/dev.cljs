@@ -3,4 +3,4 @@
 
 (defn ^:export on-jsload
   []
-  (core/init))
+  (core/init-title-screen))

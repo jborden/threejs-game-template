@@ -11,8 +11,9 @@
 (def w-key 87)
 (def d-key 68)
 (def s-key 83)
-;; space key
+
 (def space-key 32)
+(def enter-key 13)
 
 (def key-state (js-obj))
 
@@ -31,7 +32,13 @@
 
 (defn controls-handler
   "Handle user input. The inputs to this fn will change based on context"
-  [{:keys [left-fn up-fn right-fn down-fn space-fn]}]
+  [{:keys [left-fn up-fn right-fn down-fn space-fn enter-fn]
+    :or {left-fn (constantly true)
+         up-fn (constantly true)
+         right-fn (constantly true)
+         down-fn (constantly true)
+         space-fn (constantly true)
+         enter-fn (constantly true)}}]
   ;; cond/condp won't work because you have to account for when two keys
   ;; are held simultaneously!
   ;; NOTE: Camera is currently floating above xy plane, these controls will have
@@ -54,6 +61,9 @@
     (down-fn))
   ;; space
   (if (aget key-state space-key)
-    (space-fn)))
+    (space-fn))
+  ;; enter
+  (if (aget key-state enter-key)
+    (enter-fn)))
 
 

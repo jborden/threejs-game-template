@@ -1,6 +1,7 @@
 (ns {{project-ns}}.core
     (:require [reagent.core :as r]
               [cljsjs.three]
+              [{{project-ns}}.components :refer [TitleScreen]]
               [{{project-ns}}.display :as display]
               [{{project-ns}}.game-loop :as game-loop]
               [{{project-ns}}.controls :as controls]))
@@ -25,7 +26,7 @@
         (.translateY mesh (- move-increment)))
       (getMesh [this] mesh))))
 
-(defn ^:export init
+(defn ^:export init-game
   "Function to setup and start the game"
   []
   (let [scene (js/THREE.Scene.)
@@ -58,6 +59,26 @@
         {:left-fn #(.moveLeft hero)
          :right-fn #(.moveRight hero)
          :up-fn #(.moveUp hero)
-         :down-fn #(.moveDown hero)
-         :space-fn #(false)}))
+         :down-fn #(.moveDown hero)}))
      request-id)))
+
+(defn ^:export init-title-screen
+  []
+  (let [request-id (atom nil)]
+    (js/addEventListener "keydown" controls/game-key-down! true)
+    (js/addEventListener "keyup" controls/game-key-up! true)
+    (game-loop/start-time-frame-loop
+     (fn [delta-t]
+       (controls/controls-handler
+        {:enter-fn #(do (js/removeEventListener "keydown" controls/game-key-down! true)
+                        (js/removeEventListener "keyup" controls/game-key-down! true)
+                        (js/cancelAnimationFrame @request-id)
+                        (reset! request-id "stop")
+                        (r/unmount-component-at-node
+                         (.getElementById js/document
+                                          "reagent-app"))
+                        (init-game))}))
+     request-id)
+    (r/render-component
+     [TitleScreen]
+     (.getElementById js/document "reagent-app"))))

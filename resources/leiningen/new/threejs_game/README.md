@@ -7,6 +7,8 @@
 * Leiningen 2.7.1
 * node.js 5.1.1 [This is done to match the verion of node.js being used in Electron v1.6.0]
 
+Works best with Chrome.
+
 On Mac/Linux, installing node.js using [Node Version Manager](https://github.com/creationix/nvm) is recommended.
 
 ## Initial setup
@@ -57,3 +59,4 @@ var THREE, you will need to append your property and method names to this var in
 in online cljs tutorials. The provided externs files has examples of doing this using methods and properties that are used by this project
 but are not included in cljsjs/three externs.
 
+Note: The project begins with no errors at the command line or in the console.
