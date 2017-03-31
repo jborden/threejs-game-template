@@ -1,69 +1,92 @@
 (ns {{project-ns}}.controls)
 
 ;; additional keycodes can be obtained from keycode.info
-;; arrow keys
-(def left-arrow 37)
-(def up-arrow 38) 
-(def right-arrow 39)
-(def down-arrow 40)
-;; wasd keys
-(def a-key 65)
-(def w-key 87)
-(def d-key 68)
-(def s-key 83)
-
-(def space-key 32)
-(def enter-key 13)
-
-(def key-state (js-obj))
+(def key-definitions
+  {"37" :left-arrow
+   "38" :up-arrow
+   "39" :right-arrow
+   "40" :down-arrow
+   "65" :a
+   "87" :w
+   "68" :d
+   "83" :s
+   "80" :p
+   "32" :space
+   "13" :enter})
 
 (defn game-key-down!
   "Handle event related to when a user presses down on a key. This modifies 
   key-state"
-  [event]
-  (aset key-state (or (.-keycode event)
-                      (.-which event)) true))
+  [key-state event]
+  (swap! key-state assoc (get key-definitions (str (or (.-keycode event)
+                                                       (.-which event))))
+         true))
 
 (defn game-key-up!
   "Handle event related to when a user releases a key. This modifies key-state"
-  [event]
-  (aset key-state (or (.-keycode event)
-                      (.-which event)) false))
+  [key-state event]
+  (swap! key-state assoc (get key-definitions (str (or (.-keycode event)
+                                                       (.-which event))))
+         false))
 
-(defn controls-handler
+(defn key-down-handler
   "Handle user input. The inputs to this fn will change based on context"
-  [{:keys [left-fn up-fn right-fn down-fn space-fn enter-fn]
-    :or {left-fn (constantly true)
-         up-fn (constantly true)
-         right-fn (constantly true)
-         down-fn (constantly true)
-         space-fn (constantly true)
-         enter-fn (constantly true)}}]
+  [key-state {:keys [left-fn up-fn right-fn down-fn space-fn enter-fn p-fn]
+              :or {left-fn (constantly true)
+                   up-fn (constantly true)
+                   right-fn (constantly true)
+                   down-fn (constantly true)
+                   space-fn (constantly true)
+                   enter-fn (constantly true)
+                   p-fn (constantly true)}}]
   ;; cond/condp won't work because you have to account for when two keys
   ;; are held simultaneously!
   ;; NOTE: Camera is currently floating above xy plane, these controls will have
   ;; to be adjusted when the camera is looking down the x-y plane
   ;; left
-  (if (or (aget key-state left-arrow)
-          (aget key-state a-key))
+  (if (or (:left-arrow key-state)
+          (:a key-state))
     (left-fn))
   ;; up
-  (if (or (aget key-state up-arrow)
-          (aget key-state w-key))
+  (if (or (:up-arrow key-state)
+          (:w key-state))
     (up-fn))
   ;; right
-  (if (or (aget key-state right-arrow)
-          (aget key-state d-key))
+  (if (or (:right-arrow key-state)
+          (:s key-state))
     (right-fn))
   ;; down
-  (if (or (aget key-state down-arrow)
-          (aget key-state s-key))
+  (if (or (:down-arrow key-state)
+          (:s key-state))
     (down-fn))
   ;; space
-  (if (aget key-state space-key)
+  (if (:space key-state)
     (space-fn))
   ;; enter
-  (if (aget key-state enter-key)
-    (enter-fn)))
+  (if (:enter key-state)
+    (enter-fn))
+  ;; p
+  (if (:p key-state)
+    (p-fn)))
 
+(defn delay-action
+  "Delay calling function action for a maximum of steps-max, keeping track of the amount of steps in the steps-counter atom"
+  [steps-max steps-counter action]
+  (let [increase-steps-counter (fn [] (reset! steps-counter (+ @steps-counter 1)))]
+    (cond (= @steps-counter 0)
+          (do (action)
+              (increase-steps-counter))
+          (< 0 @steps-counter steps-max)
+          (increase-steps-counter)
+          (= @steps-counter steps-max)
+          (do (action)
+              (reset! steps-counter 1)))))
 
+(defn initialize-key-listeners!
+  "Remove any event listeners that are currently in place. Initialize
+  the keyboard inputs listeners that act on key-state r/atom."
+  [key-state]
+  (js/removeEventListener "keydown" (partial game-key-down! key-state) true)
+  (js/removeEventListener "keyup" (partial game-key-up! key-state) true)
+  (js/addEventListener "keydown" (partial game-key-down! key-state) true)
+  (js/addEventListener "keyup" (partial game-key-up! key-state) true))

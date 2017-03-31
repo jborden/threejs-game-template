@@ -2,25 +2,61 @@ html, body {
     width: 100%;
     height: 100%;
 }
+
 body {
     background-color: #ffffff;
     margin: 0;
     overflow: hidden;
     font-family: arial;
 }
+
 #title-screen {
     background-color: #000;
     position: absolute;
     width: 100%;
     height: 100%;
 }
+
 #title {
     color: #FFF;
     text-align: center;
     font-size: 10em;
     margin-top: 1em;
 }
-#start-menu {
+
+#title-menu {
+    display: -webkit-box;
+    display: -moz-box;
+    display: inline;
+    -webkit-box-orient: horizontal;
+    -moz-box-orient: horizontal;
+    box-orient: horizontal;
+    -webkit-box-pack: center;
+    -moz-box-pack: center;
+    box-pack: center;
+    -webkit-box-align: center;
+    -moz-box-align: center;
+    box-align: center;
+    color: #fff;
+    text-align: center;
+    font-size: 2em;
+    margin-top: 1em;
+}
+
+.selection-symbol {
+    display: inline;
+}
+
+#blocker {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+#instructions {
+    width: 100%;
+    height: 100%;
     display: -webkit-box;
     display: -moz-box;
     display: box;
@@ -35,6 +71,5 @@ body {
     box-align: center;
     color: #ffffff;
     text-align: center;
-    font-size: 2em;
-    margin-top: 1em;
+    cursor: pointer;
 }

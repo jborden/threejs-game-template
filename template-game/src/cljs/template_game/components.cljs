@@ -3,13 +3,33 @@
 
 (defn TitleScreen
   []
-  (fn [props]
+  (fn [{:keys [selected-menu-item]}]
     [:div {:id "title-screen"}
      [:div {:id "title"
             :style {:color "#FFF"}}
-       "template-game"]
-     [:div {:id "start-menu"}
-      "→ Start Game"]]))
+      "template-game"]
+     [:div {:id "title-menu"}
+      [:div {:id "start"}
+       [:div {:class "selection-symbol"}
+        (str (if (= @selected-menu-item
+                    "start")
+               "→"
+               ""))]
+       " Start"]
+      [:div {:id "foo"}
+       [:div {:class "selection-symbol"}
+        (str (if (= @selected-menu-item
+                    "foo")
+               "→"
+               ""))]
+       " Foo"]
+      [:div {:id "bar"}
+       [:div {:class "selection-symbol"}
+        (str (if (= @selected-menu-item
+                    "bar")
+               "→"
+               ""))]
+       " Bar" ]]]))
 
 (defn PauseComponent
   "Props is:

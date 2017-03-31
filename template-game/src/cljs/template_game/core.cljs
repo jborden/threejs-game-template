@@ -1,12 +1,20 @@
 (ns template-game.core
-    (:require [reagent.core :as r]
-              [cljsjs.three]
-              [template-game.components :refer [PauseComponent TitleScreen]]
-              [template-game.display :as display]
-              [template-game.game-loop :as game-loop]
-              [template-game.controls :as controls]))
+  (:require [reagent.core :as r]
+            [cljsjs.three]
+            [template-game.components :refer [PauseComponent TitleScreen]]
+            [template-game.controls :as controls]
+            [template-game.display :as display]
+            [template-game.time-loop :as time-loop]))
 
-(def state (r/atom {:paused? false}))
+(def state (r/atom {:paused? false
+                    :key-state {}
+                    :title-screen-menu-items []
+                    :state-fn (fn [t] true)
+                    :request-id nil
+                    :loop-control nil
+                    :selected-menu-item "start"
+                    :time-fn (constantly true)
+                    }))
 
 (defn hero
   []
@@ -26,6 +34,36 @@
         (.translateY mesh (- move-increment)))
       (getMesh [this] mesh))))
 
+(defn game-fn
+  "The main game, as a fn of delta-t and state"
+  []
+  (let [hero (r/cursor state [:hero])
+        render-fn (r/cursor state [:render-fn])
+        key-state (r/cursor state [:key-state])
+        paused? (r/cursor state [:paused?])
+        request-id (r/cursor state [:request-id])
+        key-state (r/cursor state [:key-state])
+        steps-max 20
+        steps-counter (r/cursor state [:steps-counter])]
+    (fn [delta-t]
+      (@render-fn)
+      ;; p-key is up, reset the delay
+      (if (not (:p @key-state))
+        (reset! steps-counter 0))
+      ;; move the hero when not paused
+      (when-not @paused?
+        (controls/key-down-handler
+         @key-state
+         {:left-fn #(.moveLeft @hero)
+          :right-fn #(.moveRight @hero)
+          :up-fn #(.moveUp @hero)
+          :down-fn #(.moveDown @hero)}))
+      ;; listen for the p-key action
+      (controls/key-down-handler
+       @key-state
+       {:p-fn (fn [] (controls/delay-action steps-max steps-counter
+                                            #(reset! paused? (not @paused?))))}))))
+
 (defn ^:export init-game
   "Function to setup and start the game"
   []
@@ -40,52 +78,108 @@
                 scene
                 [0 0 1300])
         renderer (display/create-renderer)
-        render (display/render renderer scene camera)
-        request-id (atom nil)
+        render-fn (display/render renderer scene camera)
+        request-id (r/cursor state [:request-id])
+        time-fn (r/cursor state [:time-fn])
         container (-> js/document
                       (.getElementById "game-container"))
-        hero (hero)]
-    (swap! state assoc :hero hero :request-id request-id)
+        hero (hero)
+        paused? (r/cursor state [:paused?])
+        key-state (r/cursor state [:key-state])
+        key-state-tracker (r/cursor state [:key-state-tracker])]
+    (swap! state assoc :hero hero :render-fn render-fn)
     (display/attach-renderer! renderer container)
     (.add scene (.getMesh hero))
-    ;; initialize listeners
-    (js/addEventListener "keydown" controls/game-key-down! true)
-    (js/addEventListener "keyup" controls/game-key-up! true)
-    (js/addEventListener "onfocus" #(swap! state assoc :paused? false) true)
-    (js/addEventListener "onblur" #(swap! state assoc :paused? false) true)
+    (set! (.-onblur js/window) #(do (swap! state assoc :paused? true)))
+    (reset! time-fn (game-fn))
     (r/render-component
-     (let [paused? (r/cursor state [:paused?])]
-       [PauseComponent {:paused? paused?
-                        :on-click (fn [event] (reset! paused? false))}])
-     (.getElementById js/document "reagent-app"))
-    ;; the actual game loops
-    (game-loop/start-time-frame-loop
-     (fn [delta-t]
-       (render)
-       (controls/controls-handler
-        {:left-fn #(.moveLeft hero)
-         :right-fn #(.moveRight hero)
-         :up-fn #(.moveUp hero)
-         :down-fn #(.moveDown hero)}))
-     request-id)))
+     [PauseComponent {:paused? paused?
+                      :on-click (fn [event]
+                                  (reset! paused? false))}]
+     (.getElementById js/document "reagent-app"))))
+
+(defn title-screen-loop
+  []
+  (let [request-id (r/cursor state [:request-id])
+        key-state (r/cursor state [:key-state])
+        menu-items (r/atom
+                    [{:id "start"
+                      :selected? true
+                      :on-click (fn [e]
+                                  (r/unmount-component-at-node
+                                   (.getElementById js/document
+                                                    "reagent-app"))
+                                  (init-game))}
+                     {:id "foo"
+                      :selected? false
+                      :on-click (fn [e]
+                                  (.log js/console "foo"))}
+                     {:id "bar"
+                      :selected? false
+                      :on-click (fn [e]
+                                  (.log js/console "bar"))}])
+        selected-menu-item (r/cursor state [:selected-menu-item])
+        controls-context (r/cursor state [:controls-context])
+        max-controls-delay 20
+        down-steps-counter (r/atom 0)
+        up-steps-counter (r/atom 0)
+        enter-steps-counter (r/atom 0)]
+    (fn [delta-t]
+      ;; reset the delay when no keys pressed
+      (if (and (not (:down-arrow @key-state))
+               (not (:s @key-state)))
+        (reset! down-steps-counter 0))
+      (if (and (not (:up-arrow @key-state))
+               (not (:w @key-state)))
+        (reset! up-steps-counter 0))
+      (if-not (:enter @key-state)
+        (reset! enter-steps-counter 0))
+      ;; react to the controls
+      (controls/key-down-handler
+       @key-state
+       {:enter-fn
+        (fn [] (controls/delay-action max-controls-delay enter-steps-counter
+                                      (fn [] ((:on-click
+                                               (first (filterv #(= @selected-menu-item (:id %)) @menu-items)))))))
+        :down-fn (fn []
+                   (let [move-cursor! (fn []
+                                        (let [menu-selection (mapv :selected? @menu-items)
+                                              menu-ids (mapv :id @menu-items)
+                                              current-selection (.indexOf menu-selection true)
+                                              next-selection (if (>= current-selection
+                                                                     (- (count menu-selection) 1))
+                                                               0
+                                                               (+ 1 current-selection))
+                                              new-menu-id (get menu-ids next-selection)]
+                                          (reset! menu-items (mapv #(assoc % :selected? (= new-menu-id (:id %))) @menu-items))
+                                          (reset! selected-menu-item new-menu-id)))]
+                     (controls/delay-action max-controls-delay down-steps-counter move-cursor!)))
+        :up-fn (fn []
+                 (let [move-cursor! (fn []
+                                      (let [menu-selection (mapv :selected? @menu-items)
+                                            menu-ids (mapv :id @menu-items)
+                                            current-selection (.indexOf menu-selection true)
+                                            next-selection (if (= current-selection
+                                                                  0)
+                                                             (- (count menu-selection) 1)
+                                                             (- current-selection 1))
+                                            new-menu-id (get menu-ids next-selection)]
+                                        (reset! menu-items (mapv #(assoc % :selected? (= new-menu-id (:id %))) @menu-items))
+                                        (reset! selected-menu-item new-menu-id)))]
+                   (controls/delay-action max-controls-delay up-steps-counter move-cursor!)))}))))
 
 (defn ^:export init-title-screen
   []
-  (let [request-id (atom nil)]
-    (js/addEventListener "keydown" controls/game-key-down! true)
-    (js/addEventListener "keyup" controls/game-key-up! true)
-    (game-loop/start-time-frame-loop
-     (fn [delta-t]
-       (controls/controls-handler
-        {:enter-fn #(do (js/removeEventListener "keydown" controls/game-key-down! true)
-                        (js/removeEventListener "keyup" controls/game-key-down! true)
-                        (js/cancelAnimationFrame @request-id)
-                        (reset! request-id "stop")
-                        (r/unmount-component-at-node
-                         (.getElementById js/document
-                                          "reagent-app"))
-                        (init-game))}))
-     request-id)
+  (let [time-fn (r/cursor state [:time-fn])
+        request-id (r/cursor state [:request-id])
+        key-state (r/cursor state [:key-state])
+        selected-menu-item (r/cursor state [:selected-menu-item])]
+    (controls/initialize-key-listeners! key-state)
+    ;; reset the time-fn
+    (reset! time-fn (title-screen-loop))
+    ;; mount the component
     (r/render-component
-     [TitleScreen]
-     (.getElementById js/document "reagent-app"))))
+     [TitleScreen {:selected-menu-item selected-menu-item}]
+     (.getElementById js/document "reagent-app"))
+    ;; start the loop
+    (time-loop/start-time-frame-loop time-fn request-id)))
