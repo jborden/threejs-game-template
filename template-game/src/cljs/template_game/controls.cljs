@@ -69,18 +69,18 @@
   (if (:p key-state)
     (p-fn)))
 
-(defn delay-action
-  "Delay calling function action for a maximum of steps-max, keeping track of the amount of steps in the steps-counter atom"
-  [steps-max steps-counter action]
-  (let [increase-steps-counter (fn [] (reset! steps-counter (+ @steps-counter 1)))]
-    (cond (= @steps-counter 0)
-          (do (action)
-              (increase-steps-counter))
-          (< 0 @steps-counter steps-max)
-          (increase-steps-counter)
-          (= @steps-counter steps-max)
-          (do (action)
-              (reset! steps-counter 1)))))
+(defn delay-repeat
+  "Delay repeating the call to function by ticks-max, keeping track of the amount of ticks in the ticks-counter atom"
+  [ticks-max ticks-counter f]
+  (let [increase-ticks-counter (fn [] (reset! ticks-counter (+ @ticks-counter 1)))]
+    (cond (= @ticks-counter 0)
+          (do (f)
+              (increase-ticks-counter))
+          (< 0 @ticks-counter ticks-max)
+          (increase-ticks-counter)
+          (= @ticks-counter ticks-max)
+          (do (f)
+              (reset! ticks-counter 1)))))
 
 (defn initialize-key-listeners!
   "Remove any event listeners that are currently in place. Initialize
