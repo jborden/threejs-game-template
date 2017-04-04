@@ -1,6 +1,7 @@
 (ns template-game.dev
-    (:require [template-game.core :as core]))
+  (:require [template-game.core :as core]))
 
 (defn ^:export on-jsload
   []
-  (core/init-title-screen))
+  (reset! core/state core/initial-state)
+  (core/load-game-assets))

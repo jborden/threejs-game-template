@@ -1,5 +1,7 @@
 (ns {{project-ns}}.components
-  (:require [reagent.core :as r]))
+  (:require-macros [reagent.interop :refer [$ $!]])
+  (:require [reagent.core :as r]
+            [goog.dom :as dom]))
 
 (defn TitleScreen
   []
@@ -53,3 +55,37 @@
          "Click to Unpause"]
         [:br]
         "W, A, S, D / Arrow Keys = Move, "]])))
+
+(defn GameContainer
+  [{:keys [renderer]}]
+  (r/create-class
+   {:display-name "game-container"
+    :reagent-render (fn []
+                      [:div {:id "game-container"
+                             :style {:position "absolute"
+                                     :left "0px"
+                                     :top "0px"}}])
+
+    :component-did-mount
+    (fn [this]
+      (dom/appendChild (r/dom-node this) ($ renderer :domElement))
+      ($ renderer setSize
+         ($ js/window :innerWidth)
+         ($ js/window :innerHeight)))
+
+    :component-did-ummount
+    (fn [this]
+      ($ renderer dispose))
+
+    :component-did-update
+    (fn [this old-argv]
+      ($ (:renderer (second old-argv)) forceContextLoss))
+
+    :component-will-update
+    (fn [this new-argv]
+      (let [new-renderer (:renderer (second new-argv))]
+        (dom/removeChildren (r/dom-node this))
+        (dom/appendChild (r/dom-node this) ($ new-renderer :domElement))
+        ($ new-renderer setSize
+           ($ js/window :innerWidth)
+           ($ js/window :innerHeight))))}))

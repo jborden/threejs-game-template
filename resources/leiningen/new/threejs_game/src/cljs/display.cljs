@@ -1,5 +1,5 @@
 (ns {{project-ns}}.display
-    (:require [cljsjs.three]))
+  (:require [cljsjs.three]))
 
 (defn init-camera!
   "Given a camera, initiliaze it in scene (Three.Scene object) with
@@ -48,8 +48,3 @@
 (defn render
   [renderer scene camera]
   (fn [] (.render renderer scene camera)))
-
-(defn attach-renderer!
-  "Attach renderer to container with div-id"
-  [renderer container]
-  (.appendChild container (.-domElement renderer)))

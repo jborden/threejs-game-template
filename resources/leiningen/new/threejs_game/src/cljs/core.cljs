@@ -1,16 +1,19 @@
 (ns {{project-ns}}.core
+  (:require-macros [reagent.interop :refer [$ $!]])
   (:require [reagent.core :as r]
             [cljsjs.three]
-            [{{project-ns}}.components :refer [PauseComponent TitleScreen]]
+            [{{project-ns}}.components :refer [PauseComponent TitleScreen GameContainer]]
             [{{project-ns}}.controls :as controls]
             [{{project-ns}}.display :as display]
             [{{project-ns}}.time-loop :as time-loop]))
 
-(def state (r/atom {:paused? false
+(def initial-state {:paused? false
                     :key-state {}
                     :selected-menu-item "start"
                     :time-fn (constantly true)
-                    }))
+                    :font nil})
+
+(defonce state (r/atom initial-state))
 
 (defn hero
   []
@@ -21,14 +24,46 @@
     (reify
       Object
       (moveLeft [this]
-        (.translateX mesh (- move-increment)))
+        ($ mesh translateX (- move-increment)))
       (moveRight [this]
-        (.translateX mesh move-increment))
+        ($ mesh translateX move-increment))
       (moveUp [this]
-        (.translateY mesh move-increment))
+        ($ mesh translateY move-increment))
       (moveDown [this]
-        (.translateY mesh (- move-increment)))
+        ($ mesh translateY (- move-increment)))
       (getMesh [this] mesh))))
+
+(defn load-font!
+  [url font-atom]
+  ($ (js/THREE.FontLoader.)
+     load
+     url
+     (fn [font]
+       (reset! font-atom font))))
+
+(defn goal
+  [font-atom text]
+  (let [geometry (js/THREE.TextGeometry. text
+                                         (clj->js {:font @font-atom
+                                                   :size 50
+                                                   :height 10}))
+        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xD4AF37}))
+        group (js/THREE.Group.)
+        mesh (js/THREE.Mesh. geometry material)]
+    ($ geometry computeBoundingBox)
+    (reify
+      Object
+      (getMesh [this] mesh)
+      (getGeometry [this] geometry)
+      (moveTo [this x y]
+        (let [x-center (/ (- ($ geometry :boundingBox.max.x)
+                             ($ geometry :boundingBox.min.x))
+                          2)
+              y-center (/ (- ($ geometry :boundingBox.max.y)
+                             ($ geometry :boundingBox.min.y))
+                          2)]
+          ($! mesh :position.x (- x x-center))
+          ($! mesh :position.y (- y y-center)))))))
 
 (defn game-fn
   "The main game, as a fn of delta-t and state"
@@ -53,7 +88,7 @@
           :right-fn #(.moveRight @hero)
           :up-fn #(.moveUp @hero)
           :down-fn #(.moveDown @hero)}))
-      ;; listen for the p-key action
+      ;; listen for the p-key depress
       (controls/key-down-handler
        @key-state
        {:p-fn (fn [] (controls/delay-repeat ticks-max ticks-counter
@@ -66,8 +101,8 @@
         camera (display/init-camera!
                 (display/create-perspective-camera
                  45
-                 (/ (.-innerWidth js/window)
-                    (.-innerHeight js/window))
+                 (/ ($ js/window :innerWidth)
+                    ($ js/window :innerHeight))
                  0.1
                  20000)
                 scene
@@ -75,22 +110,43 @@
         renderer (display/create-renderer)
         render-fn (display/render renderer scene camera)
         time-fn (r/cursor state [:time-fn])
-        container (-> js/document
-                      (.getElementById "game-container"))
         hero (hero)
+        font-atom (r/cursor state [:font])
+        goal (goal font-atom "Goal")
         paused? (r/cursor state [:paused?])
         key-state (r/cursor state [:key-state])
         key-state-tracker (r/cursor state [:key-state-tracker])]
-    (swap! state assoc :hero hero :render-fn render-fn)
-    (display/attach-renderer! renderer container)
-    (.add scene (.getMesh hero))
-    (set! (.-onblur js/window) #(do (swap! state assoc :paused? true)))
+    (swap! state assoc
+           :render-fn render-fn
+           :hero hero
+           :goal goal)
+    ($ scene add (.getMesh hero))
+    ($ scene add (.getMesh goal))
+    (.moveTo goal 0 -400)
+    ($! js/window :onblur #(do (swap! state assoc :paused? true)))
     (reset! time-fn (game-fn))
     (r/render-component
-     [PauseComponent {:paused? paused?
-                      :on-click (fn [event]
-                                  (reset! paused? false))}]
-     (.getElementById js/document "reagent-app"))))
+     [:div
+      [GameContainer {:renderer renderer}]
+      [PauseComponent {:paused? paused?
+                       :on-click (fn [event]
+                                   (reset! paused? false))}]]
+     ($ js/document getElementById "reagent-app"))))
+
+(defn load-assets-fn
+  []
+  (let [font (r/cursor state [:font])]
+    (fn [delta-t]
+      (when-not (nil? @font)
+        (init-game)))))
+
+(defn load-game-assets
+  []
+  (let [font-url "fonts/helvetiker_regular.typeface.json"
+        font-atom (r/cursor state [:font])
+        time-fn (r/cursor state [:time-fn])]
+    (load-font! font-url font-atom)
+    (reset! time-fn (load-assets-fn))))
 
 (defn title-screen-fn
   []
@@ -100,19 +156,20 @@
                       :selected? true
                       :on-click (fn [e]
                                   (r/unmount-component-at-node
-                                   (.getElementById js/document
-                                                    "reagent-app"))
-                                  (init-game))}
+                                   ($ js/document getElementById "reagent-app"))
+                                  (load-game-assets))}
                      {:id "foo"
                       :selected? false
                       :on-click (fn [e]
-                                  (.log js/console "foo"))}
+                                  ($ js/console log "foo"))}
                      {:id "bar"
                       :selected? false
                       :on-click (fn [e]
-                                  (.log js/console "bar"))}])
-        selected-menu-item (r/cursor state [:selected-menu-item])
-        controls-context (r/cursor state [:controls-context])
+                                  ($ js/console log "foo"))}])
+        selected-menu-item (r/cursor
+                            state [:selected-menu-item])
+        controls-context (r/cursor
+                          state [:controls-context])
         ticks-max 20
         down-ticks-counter (r/atom 0)
         up-ticks-counter (r/atom 0)
@@ -172,6 +229,6 @@
     ;; mount the component
     (r/render-component
      [TitleScreen {:selected-menu-item selected-menu-item}]
-     (.getElementById js/document "reagent-app"))
+     ($ js/document getElementById "reagent-app"))
     ;; start the loop
     (time-loop/start-time-loop time-fn)))
