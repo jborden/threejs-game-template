@@ -124,6 +124,7 @@
     ($ scene add (.getMesh goal))
     (.moveTo goal 0 -400)
     ($! js/window :onblur #(do (swap! state assoc :paused? true)))
+    (display/attach-window-resize! renderer camera)
     (reset! time-fn (game-fn))
     (r/render-component
      [:div

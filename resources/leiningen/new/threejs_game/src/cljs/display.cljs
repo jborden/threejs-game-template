@@ -1,4 +1,5 @@
 (ns {{project-ns}}.display
+  (:require-macros [reagent.interop :refer [$ $!]])
   (:require [cljsjs.three]))
 
 (defn init-camera!
@@ -48,3 +49,21 @@
 (defn render
   [renderer scene camera]
   (fn [] (.render renderer scene camera)))
+
+;; based on THREEx.WindowResize
+;; https://github.com/jeromeetienne/threex.windowresize
+(defn window-resize!
+  "Update the renderer size and camera aspect based upon window size"
+  [renderer camera]
+  (let [width ($ js/window :innerWidth)
+        height ($ js/window :innerHeight)
+        resize-renderer (fn [renderer] ($ renderer setSize width height))
+        resize-camera (fn [camera]
+                        ($! camera :aspect (/ width height))
+                        ($ camera updateProjectionMatrix))]
+    (resize-renderer renderer)
+    (resize-camera camera)))
+
+(defn attach-window-resize!
+  [renderer camera]
+  ($ js/window addEventListener "resize" (fn [] (window-resize! renderer camera)) false))

@@ -1,7 +1,7 @@
 (ns template-game.components
   (:require-macros [reagent.interop :refer [$ $!]])
-  (:require [reagent.core :as r]
-            [goog.dom :as dom]))
+  (:require [goog.dom :as dom]
+            [reagent.core :as r]))
 
 (defn TitleScreen
   []
@@ -68,10 +68,7 @@
 
     :component-did-mount
     (fn [this]
-      (dom/appendChild (r/dom-node this) ($ renderer :domElement))
-      ($ renderer setSize
-         ($ js/window :innerWidth)
-         ($ js/window :innerHeight)))
+      (dom/appendChild (r/dom-node this) ($ renderer :domElement)))
 
     :component-did-ummount
     (fn [this]
