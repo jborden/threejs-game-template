@@ -50,8 +50,6 @@
   [renderer scene camera]
   (fn [] (.render renderer scene camera)))
 
-;; based on THREEx.WindowResize
-;; https://github.com/jeromeetienne/threex.windowresize
 (defn window-resize!
   "Update the renderer size and camera aspect based upon window size"
   [renderer camera]
@@ -63,7 +61,3 @@
                         ($ camera updateProjectionMatrix))]
     (resize-renderer renderer)
     (resize-camera camera)))
-
-(defn attach-window-resize!
-  [renderer camera]
-  ($ js/window addEventListener "resize" (fn [] (window-resize! renderer camera)) false))

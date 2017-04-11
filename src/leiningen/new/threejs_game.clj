@@ -24,6 +24,7 @@
              ["src/cljs/{{sanitized}}/components.cljs" (render "src/cljs/components.cljs" data)]
              ["src/cljs/{{sanitized}}/display.cljs" (render "src/cljs/display.cljs" data)]
              ["src/cljs/{{sanitized}}/dev.cljs" (render "src/cljs/dev.cljs" data)]
+             ["src/cljs/{{sanitized}}/menu.cljs" (render "src/cljs/menu.cljs" data)]
              ["src/cljs/{{sanitized}}/time_loop.cljs" (render "src/cljs/time_loop.cljs" data)]
 
              ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]

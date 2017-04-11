@@ -1,7 +1,8 @@
 (ns {{project-ns}}.components
   (:require-macros [reagent.interop :refer [$ $!]])
   (:require [goog.dom :as dom]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [{{project-ns}}.display :as display]))
 
 (defn TitleScreen
   []
@@ -33,6 +34,29 @@
                ""))]
        " Bar" ]]]))
 
+(defn GameWonScreen
+  []
+  (fn [{:keys [selected-menu-item]}]
+    [:div {:id "title-screen"}
+     [:div {:id "title"
+            :style {:color "#FFF"}}
+      "You Win!"]
+     [:div {:id "title-menu"}
+      [:div {:id "start"}
+       [:div {:class "selection-symbol"}
+        (str (if (= @selected-menu-item
+                    "play-again")
+               "→"
+               ""))]
+       " Play Again"]
+      [:div {:id "foo"}
+       [:div {:class "selection-symbol"}
+        (str (if (= @selected-menu-item
+                    "title-screen")
+               "→"
+               ""))]
+       " Title Screen"]]]))
+
 (defn PauseComponent
   "Props is:
   {:paused? ; r/atom boolean
@@ -57,32 +81,26 @@
         "W, A, S, D / Arrow Keys = Move, "]])))
 
 (defn GameContainer
-  [{:keys [renderer]}]
-  (r/create-class
-   {:display-name "game-container"
-    :reagent-render (fn []
-                      [:div {:id "game-container"
-                             :style {:position "absolute"
-                                     :left "0px"
-                                     :top "0px"}}])
+  [{:keys [renderer camera state]}]
+  (let [on-blur #(swap! state assoc :paused? true)
+        on-resize #(display/window-resize! renderer camera)]
+    (r/create-class
+     {:display-name "game-container"
 
-    :component-did-mount
-    (fn [this]
-      (dom/appendChild (r/dom-node this) ($ renderer :domElement)))
+      :component-did-mount
+      (fn [this]
+        (dom/appendChild (r/dom-node this) ($ renderer :domElement))
+        ($ js/window addEventListener "blur" on-blur)
+        ($ js/window addEventListener "resize" on-resize false))
 
-    :component-did-ummount
-    (fn [this]
-      ($ renderer dispose))
+      :component-will-unmount
+      (fn [this]
+        ($ renderer forceContextLoss)
+        ($ js/window removeEventListener "blur" on-blur)
+        ($ js/window removeEventListener "resize" on-resize))
 
-    :component-did-update
-    (fn [this old-argv]
-      ($ (:renderer (second old-argv)) forceContextLoss))
-
-    :component-will-update
-    (fn [this new-argv]
-      (let [new-renderer (:renderer (second new-argv))]
-        (dom/removeChildren (r/dom-node this))
-        (dom/appendChild (r/dom-node this) ($ new-renderer :domElement))
-        ($ new-renderer setSize
-           ($ js/window :innerWidth)
-           ($ js/window :innerHeight))))}))
+      :reagent-render (fn []
+                        [:div {:id "game-container"
+                               :style {:position "absolute"
+                                       :left "0px"
+                                       :top "0px"}}])})))

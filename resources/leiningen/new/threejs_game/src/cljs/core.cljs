@@ -2,36 +2,52 @@
   (:require-macros [reagent.interop :refer [$ $!]])
   (:require [reagent.core :as r]
             [cljsjs.three]
-            [{{project-ns}}.components :refer [PauseComponent TitleScreen GameContainer]]
+            [{{project-ns}}.components :refer [PauseComponent TitleScreen GameContainer GameWonScreen]]
             [{{project-ns}}.controls :as controls]
             [{{project-ns}}.display :as display]
+            [{{project-ns}}.menu :as menu]
             [{{project-ns}}.time-loop :as time-loop]))
 
 (def initial-state {:paused? false
                     :key-state {}
                     :selected-menu-item "start"
                     :time-fn (constantly true)
+                    :init-game (constantly true)
+                    :init-game-won-fn (constantly true)
+                    :init-title-screen-fn (constantly true)
                     :font nil})
 
 (defonce state (r/atom initial-state))
 
 (defn hero
   []
-  (let [material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xFF0000}))
-        geometry (js/THREE.PlaneGeometry. 200 200 1)
+  (let [geometry (js/THREE.PlaneGeometry. 200 200 1)
+        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xFF0000}))
         mesh (js/THREE.Mesh. geometry material)
+        object3d ($ (js/THREE.Object3D.) add mesh)
+        box-helper (js/THREE.BoxHelper. object3d 0x00ff00)
+        bounding-box (js/THREE.Box3.)
         move-increment 5]
     (reify
       Object
+      (updateBox [this]
+        ($ box-helper update object3d)
+        ($ bounding-box setFromObject box-helper))
       (moveLeft [this]
-        ($ mesh translateX (- move-increment)))
+        ($ object3d translateX (- move-increment))
+        (.updateBox this))
       (moveRight [this]
-        ($ mesh translateX move-increment))
+        ($ object3d translateX move-increment)
+        (.updateBox this))
       (moveUp [this]
-        ($ mesh translateY move-increment))
+        ($ object3d translateY move-increment)
+        (.updateBox this))
       (moveDown [this]
-        ($ mesh translateY (- move-increment)))
-      (getMesh [this] mesh))))
+        ($ object3d translateY (- move-increment))
+        (.updateBox this))
+      (getObject3d [this] object3d)
+      (getBoundingBox [this] bounding-box)
+      (getBoxHelper [this] box-helper))))
 
 (defn load-font!
   [url font-atom]
@@ -48,27 +64,67 @@
                                                    :size 50
                                                    :height 10}))
         material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xD4AF37}))
-        group (js/THREE.Group.)
-        mesh (js/THREE.Mesh. geometry material)]
-    ($ geometry computeBoundingBox)
+        mesh (js/THREE.Mesh. geometry material)
+        object3d ($ (js/THREE.Object3D.) add mesh)
+        box-helper (js/THREE.BoxHelper. object3d 0x00ff00)
+        bounding-box (js/THREE.Box3.)]
     (reify
       Object
-      (getMesh [this] mesh)
-      (getGeometry [this] geometry)
+      (getObject3d [this] object3d)
+      (getBoundingBox [this] bounding-box)
+      (getBoxHelper [this] box-helper)
+      (updateBox [this]
+        ($ box-helper update object3d)
+        ($ bounding-box setFromObject box-helper)
+        ;;($! box-helper :visible false)
+        )
+      (intersectsBox [this box]
+        ($ (.getBoundingBox this) intersectsBox box))
       (moveTo [this x y]
-        (let [x-center (/ (- ($ geometry :boundingBox.max.x)
-                             ($ geometry :boundingBox.min.x))
+        (let [x-center (/ (- ($ bounding-box :max.x)
+                             ($ bounding-box :min.x))
                           2)
-              y-center (/ (- ($ geometry :boundingBox.max.y)
-                             ($ geometry :boundingBox.min.y))
-                          2)]
+              y-center (/
+                        (- ($ bounding-box :max.y)
+                           ($ bounding-box :min.y))
+                        2)]
           ($! mesh :position.x (- x x-center))
-          ($! mesh :position.y (- y y-center)))))))
+          ($! mesh :position.y (- y y-center))
+          (.updateBox this))))))
+
+(defn game-won-fn
+  []
+  (menu/menu-screen
+   state
+   20
+   (r/atom
+    [{:id "play-again"
+      :selected? true
+      :on-click (fn [e]
+                  (@(r/cursor state [:init-game])))}
+     {:id "title-screen"
+      :selected? false
+      :on-click (fn [e]
+                  (@(r/cursor state [:init-title-screen-fn])))}])))
+
+(defn init-game-won-screen
+  "The game is won, go to 'you win' screen"
+  []
+  (let [time-fn (r/cursor state [:time-fn])
+        key-state (r/cursor state [:key-state])
+        selected-menu-item (r/cursor state [:selected-menu-item])]
+    (reset! key-state (:key-state initial-state))
+    (reset! selected-menu-item "play-again")
+    (reset! time-fn (game-won-fn))
+    (r/render
+     [GameWonScreen {:selected-menu-item selected-menu-item}]
+     ($ js/document getElementById "reagent-app"))))
 
 (defn game-fn
   "The main game, as a fn of delta-t and state"
   []
   (let [hero (r/cursor state [:hero])
+        goal (r/cursor state [:goal])
         render-fn (r/cursor state [:render-fn])
         key-state (r/cursor state [:key-state])
         paused? (r/cursor state [:paused?])
@@ -77,6 +133,8 @@
         ticks-counter (r/cursor state [:ticks-counter])]
     (fn [delta-t]
       (@render-fn)
+      (when (.intersectsBox @goal (.getBoundingBox @hero))
+        (init-game-won-screen))
       ;; p-key is up, reset the delay
       (if (not (:p @key-state))
         (reset! ticks-counter 0))
@@ -119,16 +177,21 @@
     (swap! state assoc
            :render-fn render-fn
            :hero hero
-           :goal goal)
-    ($ scene add (.getMesh hero))
-    ($ scene add (.getMesh goal))
-    (.moveTo goal 0 -400)
-    ($! js/window :onblur #(do (swap! state assoc :paused? true)))
-    (display/attach-window-resize! renderer camera)
+           :goal goal
+           :scene scene)
+    (.updateBox hero)
+    (.updateBox goal)
+    ($ scene add (.getObject3d hero))
+    ($ scene add (.getBoxHelper hero))
+    ($ scene add (.getObject3d goal))
+    ($ scene add (.getBoxHelper goal))
+    (.moveTo goal 0 -300)
     (reset! time-fn (game-fn))
-    (r/render-component
-     [:div
-      [GameContainer {:renderer renderer}]
+    (r/render
+     [:div {:id "root-node"}
+      [GameContainer {:renderer renderer
+                      :camera camera
+                      :state state}]
       [PauseComponent {:paused? paused?
                        :on-click (fn [event]
                                    (reset! paused? false))}]]
@@ -151,85 +214,49 @@
 
 (defn title-screen-fn
   []
-  (let [key-state (r/cursor state [:key-state])
-        menu-items (r/atom
-                    [{:id "start"
-                      :selected? true
-                      :on-click (fn [e]
-                                  (r/unmount-component-at-node
-                                   ($ js/document getElementById "reagent-app"))
-                                  (load-game-assets))}
-                     {:id "foo"
-                      :selected? false
-                      :on-click (fn [e]
-                                  ($ js/console log "foo"))}
-                     {:id "bar"
-                      :selected? false
-                      :on-click (fn [e]
-                                  ($ js/console log "foo"))}])
-        selected-menu-item (r/cursor
-                            state [:selected-menu-item])
-        controls-context (r/cursor
-                          state [:controls-context])
-        ticks-max 20
-        down-ticks-counter (r/atom 0)
-        up-ticks-counter (r/atom 0)
-        enter-ticks-counter (r/atom 0)]
-    (fn [delta-t]
-      ;; reset the delay when no keys pressed
-      (if (and (not (:down-arrow @key-state))
-               (not (:s @key-state)))
-        (reset! down-ticks-counter 0))
-      (if (and (not (:up-arrow @key-state))
-               (not (:w @key-state)))
-        (reset! up-ticks-counter 0))
-      (if-not (:enter @key-state)
-        (reset! enter-ticks-counter 0))
-      ;; react to the controls
-      (controls/key-down-handler
-       @key-state
-       {:enter-fn
-        (fn [] (controls/delay-repeat ticks-max enter-ticks-counter
-                                      (fn [] ((:on-click
-                                               (first (filterv #(= @selected-menu-item (:id %)) @menu-items)))))))
-        :down-fn (fn []
-                   (let [move-cursor! (fn []
-                                        (let [menu-selection (mapv :selected? @menu-items)
-                                              menu-ids (mapv :id @menu-items)
-                                              current-selection (.indexOf menu-selection true)
-                                              next-selection (if (>= current-selection
-                                                                     (- (count menu-selection) 1))
-                                                               0
-                                                               (+ 1 current-selection))
-                                              new-menu-id (get menu-ids next-selection)]
-                                          (reset! menu-items (mapv #(assoc % :selected? (= new-menu-id (:id %))) @menu-items))
-                                          (reset! selected-menu-item new-menu-id)))]
-                     (controls/delay-repeat ticks-max down-ticks-counter move-cursor!)))
-        :up-fn (fn []
-                 (let [move-cursor! (fn []
-                                      (let [menu-selection (mapv :selected? @menu-items)
-                                            menu-ids (mapv :id @menu-items)
-                                            current-selection (.indexOf menu-selection true)
-                                            next-selection (if (= current-selection
-                                                                  0)
-                                                             (- (count menu-selection) 1)
-                                                             (- current-selection 1))
-                                            new-menu-id (get menu-ids next-selection)]
-                                        (reset! menu-items (mapv #(assoc % :selected? (= new-menu-id (:id %))) @menu-items))
-                                        (reset! selected-menu-item new-menu-id)))]
-                   (controls/delay-repeat ticks-max up-ticks-counter move-cursor!)))}))))
+  (menu/menu-screen state
+                    20
+                    (r/atom
+                     [{:id "start"
+                       :selected? true
+                       :on-click (fn [e]
+                                   (load-game-assets))}
+                      {:id "foo"
+                       :selected? false
+                       :on-click (fn [e]
+                                   ($ js/console log "foo"))}
+                      {:id "bar"
+                       :selected? false
+                       :on-click (fn [e]
+                                   ($ js/console log "foo"))}])))
 
 (defn ^:export init-title-screen
   []
   (let [time-fn (r/cursor state [:time-fn])
-        key-state (r/cursor state [:key-state])
-        selected-menu-item (r/cursor state [:selected-menu-item])]
-    (controls/initialize-key-listeners! key-state)
+        selected-menu-item (r/cursor state [:selected-menu-item])
+        key-state (r/cursor state [:key-state])]
+    (reset! key-state (:key-state initial-state))
+    (reset! selected-menu-item "start")
     ;; reset the time-fn
     (reset! time-fn (title-screen-fn))
     ;; mount the component
-    (r/render-component
+    (r/render
      [TitleScreen {:selected-menu-item selected-menu-item}]
-     ($ js/document getElementById "reagent-app"))
+     ($ js/document getElementById "reagent-app"))))
+
+(defn ^:export init
+  []
+  (let [time-fn (r/cursor state [:time-fn])
+        init-game-fn (r/cursor state [:init-game])
+        key-state (r/cursor state [:key-state])
+        init-game-won-fn (r/cursor state [:init-game-won-fn])
+        init-title-screen-fn (r/cursor state [:init-title-screen-fn])]
+    ;; start controls listeners
+    (controls/initialize-key-listeners! key-state)
+    ;; set init-fn's
+    (reset! init-game-fn init-game)
+    (reset! init-title-screen-fn init-title-screen)
     ;; start the loop
-    (time-loop/start-time-loop time-fn)))
+    (time-loop/start-time-loop time-fn)
+    ;; initialize the title-screen
+    (@init-title-screen-fn)))
