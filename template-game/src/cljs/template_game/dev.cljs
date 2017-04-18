@@ -7,5 +7,4 @@
   []
   (r/unmount-component-at-node
    ($ js/document getElementById "reagent-app"))
-  (reset! core/state core/initial-state)
   (core/load-game-assets))

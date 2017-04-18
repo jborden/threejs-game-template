@@ -6,7 +6,8 @@
             [template-game.controls :as controls]
             [template-game.display :as display]
             [template-game.menu :as menu]
-            [template-game.time-loop :as time-loop]))
+            [template-game.time-loop :as time-loop]
+            [template-game.utilities :as utilities]))
 
 (def initial-state {:paused? false
                     :key-state {}
@@ -46,9 +47,21 @@
                         (- ($ bounding-box :max.y)
                            ($ bounding-box :min.y))
                         2)]
-          ($! mesh :position.x (- x x-center))
-          ($! mesh :position.y (- y y-center))
-          (.updateBox this))))))
+          ($! object3d :position.x (- x x-center))
+          ($! object3d :position.y (- y y-center))
+          (.updateBox this)))
+      (chaseHero [this hero dL]
+        (let [hero-object (.getObject3d hero)
+              this-object (.getObject3d this)
+              this->hero
+              (utilities/normalized-distance-vector
+               this-object hero-object)]
+          ;; if the distance between hero and this is larger than dL
+          ;; pursue hero
+          (when (> (utilities/calculate-distance hero-object this-object) dL)
+            ($ this-object position.add
+               ($ this->hero multiplyScalar dL))
+            (.updateBox this)))))))
 
 (defn hero
   []
@@ -119,8 +132,8 @@
                         (- ($ bounding-box :max.y)
                            ($ bounding-box :min.y))
                         2)]
-          ($! mesh :position.x (- x x-center))
-          ($! mesh :position.y (- y y-center))
+          ($! object3d :position.x (- x x-center))
+          ($! object3d :position.y (- y y-center))
           (.updateBox this))))))
 
 (defn game-won-fn
@@ -185,6 +198,8 @@
       ;; p-key is up, reset the delay
       (if (not (:p @key-state))
         (reset! ticks-counter 0))
+      ;; chase hero
+;;      (.chaseHero @enemy @hero 1.4)
       ;; move the hero when not paused
       (when-not @paused?
         (controls/key-down-handler
@@ -238,7 +253,7 @@
     ($ scene add (.getObject3d enemy))
     ($ scene add (.getBoxHelper enemy))
     (.moveTo goal 0 -300)
-    (.moveTo enemy 50 300)
+    (.moveTo enemy 50 400)
     (reset! time-fn (game-fn))
     (r/render
      [:div {:id "root-node"}
