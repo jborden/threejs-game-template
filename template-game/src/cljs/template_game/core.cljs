@@ -2,7 +2,7 @@
   (:require-macros [reagent.interop :refer [$ $!]])
   (:require [reagent.core :as r]
             [cljsjs.three]
-            [template-game.components :refer [PauseComponent TitleScreen GameContainer GameWonScreen]]
+            [template-game.components :refer [PauseComponent TitleScreen GameContainer GameWonScreen GameLostScreen]]
             [template-game.controls :as controls]
             [template-game.display :as display]
             [template-game.menu :as menu]
@@ -19,10 +19,41 @@
 
 (defonce state (r/atom initial-state))
 
+(defn enemy
+  []
+  (let [geometry (js/THREE.PlaneGeometry. 100 100 1)
+        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xFF0000}))
+        mesh (js/THREE.Mesh. geometry material)
+        object3d ($ (js/THREE.Object3D.) add mesh)
+        box-helper (js/THREE.BoxHelper. object3d 0x00ff00)
+        bounding-box (js/THREE.Box3.)
+        move-increment 5]
+    (reify
+      Object
+      (updateBox [this]
+        ($ box-helper update object3d)
+        ($ bounding-box setFromObject box-helper))
+      (intersectsBox [this box]
+        ($ (.getBoundingBox this) intersectsBox box))
+      (getObject3d [this] object3d)
+      (getBoundingBox [this] bounding-box)
+      (getBoxHelper [this] box-helper)
+      (moveTo [this x y]
+        (let [x-center (/ (- ($ bounding-box :max.x)
+                             ($ bounding-box :min.x))
+                          2)
+              y-center (/
+                        (- ($ bounding-box :max.y)
+                           ($ bounding-box :min.y))
+                        2)]
+          ($! mesh :position.x (- x x-center))
+          ($! mesh :position.y (- y y-center))
+          (.updateBox this))))))
+
 (defn hero
   []
   (let [geometry (js/THREE.PlaneGeometry. 200 200 1)
-        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xFF0000}))
+        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0x0000FF}))
         mesh (js/THREE.Mesh. geometry material)
         object3d ($ (js/THREE.Object3D.) add mesh)
         box-helper (js/THREE.BoxHelper. object3d 0x00ff00)
@@ -120,10 +151,24 @@
      [GameWonScreen {:selected-menu-item selected-menu-item}]
      ($ js/document getElementById "reagent-app"))))
 
+(defn init-game-lost-screen
+  "The game is lost, go to 'Game Over' screen"
+  []
+  (let [time-fn (r/cursor state [:time-fn])
+        key-state (r/cursor state [:key-state])
+        selected-menu-item (r/cursor state [:selected-menu-item])]
+    (reset! key-state (:key-state initial-state))
+    (reset! selected-menu-item "play-again")
+    (reset! time-fn (game-won-fn))
+    (r/render
+     [GameLostScreen {:selected-menu-item selected-menu-item}]
+     ($ js/document getElementById "reagent-app"))))
+
 (defn game-fn
   "The main game, as a fn of delta-t and state"
   []
   (let [hero (r/cursor state [:hero])
+        enemy (r/cursor state [:enemy])
         goal (r/cursor state [:goal])
         render-fn (r/cursor state [:render-fn])
         key-state (r/cursor state [:key-state])
@@ -135,6 +180,8 @@
       (@render-fn)
       (when (.intersectsBox @goal (.getBoundingBox @hero))
         (init-game-won-screen))
+      (when (.intersectsBox @enemy (.getBoundingBox @hero))
+        (init-game-lost-screen))
       ;; p-key is up, reset the delay
       (if (not (:p @key-state))
         (reset! ticks-counter 0))
@@ -169,6 +216,7 @@
         render-fn (display/render renderer scene camera)
         time-fn (r/cursor state [:time-fn])
         hero (hero)
+        enemy (enemy)
         font-atom (r/cursor state [:font])
         goal (goal font-atom "Goal")
         paused? (r/cursor state [:paused?])
@@ -178,14 +226,19 @@
            :render-fn render-fn
            :hero hero
            :goal goal
+           :enemy enemy
            :scene scene)
     (.updateBox hero)
     (.updateBox goal)
+    (.updateBox enemy)
     ($ scene add (.getObject3d hero))
     ($ scene add (.getBoxHelper hero))
     ($ scene add (.getObject3d goal))
     ($ scene add (.getBoxHelper goal))
+    ($ scene add (.getObject3d enemy))
+    ($ scene add (.getBoxHelper enemy))
     (.moveTo goal 0 -300)
+    (.moveTo enemy 50 300)
     (reset! time-fn (game-fn))
     (r/render
      [:div {:id "root-node"}

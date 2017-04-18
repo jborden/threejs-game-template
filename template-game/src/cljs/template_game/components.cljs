@@ -57,6 +57,29 @@
                ""))]
        " Title Screen"]]]))
 
+(defn GameLostScreen
+  []
+  (fn [{:keys [selected-menu-item]}]
+    [:div {:id "title-screen"}
+     [:div {:id "title"
+            :style {:color "#FFF"}}
+      "Game Over"]
+     [:div {:id "title-menu"}
+      [:div {:id "start"}
+       [:div {:class "selection-symbol"}
+        (str (if (= @selected-menu-item
+                    "play-again")
+               "→"
+               ""))]
+       " Play Again"]
+      [:div {:id "foo"}
+       [:div {:class "selection-symbol"}
+        (str (if (= @selected-menu-item
+                    "title-screen")
+               "→"
+               ""))]
+       " Title Screen"]]]))
+
 (defn PauseComponent
   "Props is:
   {:paused? ; r/atom boolean
