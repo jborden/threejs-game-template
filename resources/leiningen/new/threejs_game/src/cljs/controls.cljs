@@ -43,22 +43,22 @@
   ;; are held simultaneously!
   ;; NOTE: Camera is currently floating above xy plane, these controls will have
   ;; to be adjusted when the camera is looking down the x-y plane
-  ;; left
-  (if (or (:left-arrow key-state)
-          (:a key-state))
-    (left-fn))
   ;; up
   (if (or (:up-arrow key-state)
           (:w key-state))
     (up-fn))
-  ;; right
-  (if (or (:right-arrow key-state)
-          (:s key-state))
-    (right-fn))
+  ;; left
+  (if (or (:left-arrow key-state)
+          (:a key-state))
+    (left-fn))
   ;; down
   (if (or (:down-arrow key-state)
           (:s key-state))
     (down-fn))
+  ;; right
+  (if (or (:right-arrow key-state)
+          (:d key-state))
+    (right-fn))
   ;; space
   (if (:space key-state)
     (space-fn))
