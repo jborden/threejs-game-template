@@ -27,7 +27,8 @@
              ["src/cljs/{{sanitized}}/menu.cljs" (render "src/cljs/menu.cljs" data)]
              ["src/cljs/{{sanitized}}/time_loop.cljs" (render "src/cljs/time_loop.cljs" data)]
              ["src/cljs/{{sanitized}}/utilities.cljs" (render "src/cljs/utilities.cljs" data)]
-             
+             ["src/cljs/{{sanitized}}/xhr.cljs" (render "src/cljs/xhr.cljs" data)]
+             ["src/cljs/{{sanitized}}/cookies.cljs" (render "src/cljs/cookies.cljs" data)]
              ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]
              ["resources/public/index.html" (render "resources/public/index.html" data)]
              ["resources/public/index_release.html" (render "resources/public/index_release.html" data)]
