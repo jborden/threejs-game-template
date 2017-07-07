@@ -1,4 +1,4 @@
-(ns {{project.ns}}.cookies
+(ns {{project-ns}}.cookies
   (:require [goog.net.Cookies]))
 
 (defn get-cookie
