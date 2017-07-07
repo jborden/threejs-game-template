@@ -6,9 +6,9 @@
   "Given a camera, initiliaze it in scene (Three.Scene object) with
   [x y z] vector for initial position"
   [camera scene position]
-  (.add scene camera)
-  (apply #(.position.set camera %1 %2 %3) position)
-  (.lookAt camera (.-position scene))
+  ($ scene add camera)
+  (apply #($ camera position.set %1 %2 %3) position)
+  ($ camera lookAt ($ scene :position))
   camera)
 
 (defn create-perspective-camera
@@ -24,13 +24,13 @@
 (defn change-position!
   "Change the position of camera by delta vector [x y z]"
   [camera delta]
-  (let [x (.-position.x camera)
-        y (.-position.y camera)
-        z (.-position.z camera)]
-    (.position.set camera
-                   (+ x (nth delta 0))
-                   (+ y (nth delta 1))
-                   (+ z (nth delta 2)))))
+  (let [x ($ camera :position.x)
+        y ($ camera :position.y)
+        z ($ camera :position.z)]
+    ($ camera position.set
+       (+ x (nth delta 0))
+       (+ y (nth delta 1))
+       (+ z (nth delta 2)))))
 
 ;; sometimes there are issues with specific chrome builds
 ;; and you will get the console error
@@ -41,14 +41,14 @@
 (defn create-renderer
   []
   (let [renderer (js/THREE.WebGLRenderer. (clj->js {:antialias true}))]
-    (.setSize renderer
-              (.-innerWidth js/window)
-              (.-innerHeight js/window))
+    ($ renderer setSize
+       ($ js/window :innerWidth)
+       ($ js/window :innerHeight))
     renderer))
 
 (defn render
   [renderer scene camera]
-  (fn [] (.render renderer scene camera)))
+  (fn [] ($ renderer render scene camera)))
 
 (defn window-resize!
   "Update the renderer size and camera aspect based upon window size"
