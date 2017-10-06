@@ -34,3 +34,24 @@
         (find-nearest-object target (rest object-pool) nearest-object) ;; nearest object still closer
         (find-nearest-object target (rest object-pool) next-object) ;; the next object was closer
         ))))
+
+(defn url->filename
+  "Given a url return the filename"
+  [url]
+  (let [path js/goog.string.path]
+    ($ path baseName url)))
+
+(defn clj->json
+  [clj]
+  (js/JSON.stringify (clj->js clj)))
+
+(defn json->clj
+  [json]
+  (js->clj (js/JSON.parse json) :keywordize-keys true))
+
+(defn get-input-value
+  "Get the field value of a form"
+  [field]
+  (-> field
+      ($ :target)
+      ($ :value)))
