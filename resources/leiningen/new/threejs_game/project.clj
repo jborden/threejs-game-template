@@ -1,13 +1,13 @@
 (defproject {{ name }} "0.1.0-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.494"]
-                 [cljsjs/three "0.0.84-0"]
-                 [reagent "0.6.1"]]
-  :plugins [[lein-cljsbuild "1.1.5"]
-            [lein-figwheel "0.5.9"]]
-  :npm {:dependencies [[source-map-support "0.4.14"]]}
+  :dependencies [[org.clojure/clojure "1.9.0-beta2"]
+                 [org.clojure/clojurescript "1.9.946"]
+                 [cljsjs/three "0.0.87-0"]
+                 [reagent "0.8.0-alpha1"]]
+  :plugins [[lein-cljsbuild "1.1.7"]
+            [lein-figwheel "0.5.14"]]
+  :npm {:dependencies [[source-map-support "0.5.0"]]}
   :source-paths ["src" "target/classes"]
   :clean-targets ^{:protect false} ["release" "resources/public/js"]
   :cljsbuild {:builds [{:id "dev"

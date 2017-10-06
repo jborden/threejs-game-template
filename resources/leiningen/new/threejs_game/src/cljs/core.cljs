@@ -32,7 +32,7 @@
     (reify
       Object
       (updateBox [this]
-        ($ box-helper update object3d)
+        ($ box-helper update)
         ($ bounding-box setFromObject box-helper))
       (intersectsBox [this box]
         ($ (.getBoundingBox this) intersectsBox box))
@@ -75,7 +75,7 @@
     (reify
       Object
       (updateBox [this]
-        ($ box-helper update object3d)
+        ($ box-helper update)
         ($ bounding-box setFromObject box-helper))
       (moveLeft [this]
         ($ object3d translateX (- move-increment))
@@ -118,7 +118,7 @@
       (getBoundingBox [this] bounding-box)
       (getBoxHelper [this] box-helper)
       (updateBox [this]
-        ($ box-helper update object3d)
+        ($ box-helper update)
         ($ bounding-box setFromObject box-helper)
         ;;($! box-helper :visible false)
         )
