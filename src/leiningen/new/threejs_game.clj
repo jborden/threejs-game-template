@@ -6,6 +6,9 @@
 
 (def render (renderer "threejs-game"))
 
+(defn binary [file]
+  (io/input-stream (io/resource (str/join "/" ["leiningen" "new" "threejs_game" file]))))
+
 ;; From: https://github.com/http-kit/lein-template/blob/master/src/leiningen/new/http_kit.clj
 
 (defn threejs-game
@@ -29,10 +32,14 @@
              ["src/cljs/{{sanitized}}/utilities.cljs" (render "src/cljs/utilities.cljs" data)]
              ["src/cljs/{{sanitized}}/xhr.cljs" (render "src/cljs/xhr.cljs" data)]
              ["src/cljs/{{sanitized}}/cookies.cljs" (render "src/cljs/cookies.cljs" data)]
+             ["src/cljs/{{sanitized}}/sound.cljs" (render "src/cljs/sound.cljs" data)]
              ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]
              ["resources/public/index.html" (render "resources/public/index.html" data)]
              ["resources/public/index_release.html" (render "resources/public/index_release.html" data)]
 
              ["resources/public/css/{{sanitized}}.css" (render "resources/public/css/main.css" data)]
              ["resources/public/fonts/helvetiker_regular.typeface.json" (render "resources/public/fonts/helvetiker_regular.typeface.json" data)]
-             ["resources/public/server.js" (render "resources/public/server.js" data)])))
+             ["resources/public/server.js" (render "resources/public/server.js" data)]
+             ["resources/public/audio/Hit_Hurt19.wav" (binary "resources/public/audio/Hit_Hurt19.wav")]
+             ["resources/public/audio/Powerup9.wav" (binary "resources/public/audio/Powerup9.wav")]
+             )))

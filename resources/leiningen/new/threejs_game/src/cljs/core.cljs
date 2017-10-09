@@ -6,6 +6,7 @@
             [{{project-ns}}.controls :as controls]
             [{{project-ns}}.display :as display]
             [{{project-ns}}.menu :as menu]
+            [{{project-ns}}.sound :as sound]
             [{{project-ns}}.time-loop :as time-loop]
             [{{project-ns}}.utilities :as utilities]))
 
@@ -192,14 +193,16 @@
     (fn [delta-t]
       (@render-fn)
       (when (.intersectsBox @goal (.getBoundingBox @hero))
+        (sound/play-sound state "Powerup9.wav")
         (init-game-won-screen))
       (when (.intersectsBox @enemy (.getBoundingBox @hero))
+        (sound/play-sound state "Hit_Hurt19.wav")
         (init-game-lost-screen))
       ;; p-key is up, reset the delay
       (if (not (:p @key-state))
         (reset! ticks-counter 0))
       ;; chase hero
-;;      (.chaseHero @enemy @hero 1.4)
+      ;;      (.chaseHero @enemy @hero 1.4)
       ;; move the hero when not paused
       (when-not @paused?
         (controls/key-down-handler
@@ -276,9 +279,14 @@
   []
   (let [font-url "fonts/helvetiker_regular.typeface.json"
         font-atom (r/cursor state [:font])
-        time-fn (r/cursor state [:time-fn])]
+        time-fn (r/cursor state [:time-fn])
+        sounds (r/cursor state [:sounds])]
     (load-font! font-url font-atom)
-    (reset! time-fn (load-assets-fn))))
+    (reset! time-fn (load-assets-fn))
+    ;; sound loader
+    (when ((comp not nil?) @sounds)
+      (doall (map #($ % unload) (vals @sounds))))
+    (doall (map (partial sound/sound-loader state) sound/urls))))
 
 (defn title-screen-fn
   []

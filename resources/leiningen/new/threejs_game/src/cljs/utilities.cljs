@@ -1,5 +1,6 @@
 (ns {{project-ns}}.utilities
-  (:require-macros [reagent.interop :refer [$ $!]]))
+    (:require-macros [reagent.interop :refer [$ $!]])
+    (:require [goog.string.path]))
 
 (defn calculate-distance
   "Given two THREE.Object3d objects, calculate the distance between them"
