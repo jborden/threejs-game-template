@@ -1,4 +1,4 @@
-(defproject threejs-game/lein-template "0.1.0"
+(defproject threejs-game/lein-template "0.1.5"
   :description "A Leiningen template for clojurescript game development using the three.js library"
   :url "https://github.com/jborden/threejs-game-template"
   :license {:name "MIT License"
