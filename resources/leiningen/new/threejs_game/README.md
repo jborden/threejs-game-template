@@ -54,7 +54,7 @@ ex: http://localhost:8000/index_release.html
 ### Errors related to Name Mangling
 
 A common source of errors in advanced compilation is related to issues with name mangling of object property and method names.
-Though the cljsjs/three package comes with externs, they are not exhaustive. If you are using a property or method not listed in [three.ext.js](https://github.com/cljsjs/packages/blob/master/three/resources/cljsjs/three/common/three.ext.js) you will need to add it to **src/js/{{sanitized}}.externs.js** file.
+Though the cljsjs/three package comes with externs, they are not exhaustive. If you are using a property or method not listed in [three.ext.js](https://github.com/cljsjs/packages/blob/master/three/resources/cljsjs/three/common/three.ext.js) you will need to add it to **src/js/{{sanitized}}.externs.js**.
 
 There is a caveat, however. Because the extern file mentioned above already declares the
 var THREE, you will need to append your property and method names to this var instead of creating a new THREE var as is typically suggested
