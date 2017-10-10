@@ -103,6 +103,30 @@
         [:br]
         "W, A, S, D / Arrow Keys = Move, "]])))
 
+(defn AssetLoadingComponent
+  "Props is:
+   {:assets-loaded-percent ; r/atom number}"
+  [props]
+  (fn [props]
+    (let [{:keys [assets-loaded-percent]} props]
+      [:div {:style {:display (str (if (= @assets-loaded-percent 1)
+                                     "none"
+                                     "block"))
+                     :position "absolute"
+                     :width "100%"
+                     :height "100%"}}
+       [:div {:id "instructions"}
+        [:div {:style {:width "100%"
+                       :position "fixed"
+                       :bottom "1em"}}
+         [:div {:style {:background-color "darkgray"
+                        :height "20px"
+                        :width "10em"
+                        :margin "0 auto"}}
+          [:div {:style {:background-color "white"
+                         :width (str (* @assets-loaded-percent 100) "%")
+                         :height "20px"}}]]]]])))
+
 (defn GameContainer
   [{:keys [renderer camera state]}]
   (let [on-blur #(swap! state assoc :paused? true)

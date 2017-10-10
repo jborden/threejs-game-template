@@ -2,7 +2,7 @@
   (:require-macros [reagent.interop :refer [$ $!]])
   (:require [reagent.core :as r]
             [cljsjs.three]
-            [{{project-ns}}.components :refer [PauseComponent TitleScreen GameContainer GameWonScreen GameLostScreen]]
+            [{{project-ns}}.components :refer [PauseComponent TitleScreen GameContainer GameWonScreen GameLostScreen AssetLoadingComponent]]
             [{{project-ns}}.controls :as controls]
             [{{project-ns}}.display :as display]
             [{{project-ns}}.fonts :as fonts]
@@ -24,6 +24,41 @@
 
 (defonce state (r/atom initial-state))
 
+(defn init-game-container
+  [state]
+  (let [scene (js/THREE.Scene.)
+        camera (display/init-camera!
+                (display/create-perspective-camera
+                 45
+                 (/ ($ js/window :innerWidth)
+                    ($ js/window :innerHeight))
+                 0.1
+                 20000)
+                scene
+                [0 0 2500])
+        renderer (display/create-renderer)
+        render-fn (display/render renderer scene camera)
+        assets-loaded-percent (r/cursor state [:assets-loaded-percent])
+        paused? (r/cursor state [:paused?])]
+    ;; put the basic display elements into state
+    (swap! state assoc
+           :scene scene
+           :camera camera
+           :render-fn render-fn)
+    ;; resize the view of the camera to match that of the viewport
+    (display/window-resize! renderer camera)
+    ;; add the game cointainer to the dom
+    (r/render
+     [:div {:id "root-node"}
+      [GameContainer {:renderer renderer
+                      :camera camera
+                      :state state}]
+      [PauseComponent {:paused? paused?
+                       :on-click (fn [event]
+                                   (reset! paused? false))}]
+      [AssetLoadingComponent {:assets-loaded-percent assets-loaded-percent}]]
+     ($ js/document getElementById "reagent-app"))))
+
 (defn game-won-fn
   []
   (menu/menu-screen
@@ -33,6 +68,7 @@
     [{:id "play-again"
       :selected? true
       :on-click (fn [e]
+                  (init-game-container state)
                   (@(r/cursor state [:init-game]) state))}
      {:id "title-screen"
       :selected? false
@@ -107,18 +143,7 @@
 (defn ^:export init-game
   "Function to setup and start the game"
   [state]
-  (let [scene (js/THREE.Scene.)
-        camera (display/init-camera!
-                (display/create-perspective-camera
-                 45
-                 (/ ($ js/window :innerWidth)
-                    ($ js/window :innerHeight))
-                 0.1
-                 20000)
-                scene
-                [0 0 1300])
-        renderer (display/create-renderer)
-        render-fn (display/render renderer scene camera)
+  (let [scene (r/cursor state [:scene])
         time-fn (r/cursor state [:time-fn])
         hero (objects/hero)
         enemy (objects/enemy {:texture @(r/cursor state [:textures "enemy.png"])})
@@ -128,32 +153,21 @@
         key-state (r/cursor state [:key-state])
         key-state-tracker (r/cursor state [:key-state-tracker])]
     (swap! state assoc
-           :render-fn render-fn
            :hero hero
            :goal goal
-           :enemy enemy
-           :scene scene)
+           :enemy enemy)
     (.updateBox hero)
     (.updateBox goal)
     (.updateBox enemy)
-    ($ scene add (.getObject3d hero))
-    ($ scene add (.getBoxHelper hero))
-    ($ scene add (.getObject3d goal))
-    ($ scene add (.getBoxHelper goal))
-    ($ scene add (.getObject3d enemy))
-    ($ scene add (.getBoxHelper enemy))
+    ($ @scene add (.getObject3d hero))
+    ($ @scene add (.getBoxHelper hero))
+    ($ @scene add (.getObject3d goal))
+    ($ @scene add (.getBoxHelper goal))
+    ($ @scene add (.getObject3d enemy))
+    ($ @scene add (.getBoxHelper enemy))
     (.moveTo goal 0 -300)
     (.moveTo enemy 50 400)
-    (reset! time-fn (game-fn))
-    (r/render
-     [:div {:id "root-node"}
-      [GameContainer {:renderer renderer
-                      :camera camera
-                      :state state}]
-      [PauseComponent {:paused? paused?
-                       :on-click (fn [event]
-                                   (reset! paused? false))}]]
-     ($ js/document getElementById "reagent-app"))))
+    (reset! time-fn (game-fn))))
 
 (defn percent-assets-loaded
   "Return the total amount of assets that has been loaded"
@@ -172,7 +186,6 @@
           percent-fonts)
        3)))
 
-;; preserved, but not the same
 (defn load-assets-fn
   []
   (let [assets-loaded-percent (r/cursor state [:assets-loaded-percent])]
@@ -202,6 +215,7 @@
                      [{:id "start"
                        :selected? true
                        :on-click (fn [e]
+                                   (init-game-container state)
                                    (load-game-assets))}
                       {:id "foo"
                        :selected? false
