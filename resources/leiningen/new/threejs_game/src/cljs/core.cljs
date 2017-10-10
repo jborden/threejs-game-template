@@ -5,6 +5,7 @@
             [{{project-ns}}.components :refer [PauseComponent TitleScreen GameContainer GameWonScreen GameLostScreen]]
             [{{project-ns}}.controls :as controls]
             [{{project-ns}}.display :as display]
+            [{{project-ns}}.fonts :as fonts]
             [{{project-ns}}.menu :as menu]
             [{{project-ns}}.sound :as sound]
             [{{project-ns}}.time-loop :as time-loop]
@@ -17,7 +18,7 @@
                     :init-game (constantly true)
                     :init-game-won-fn (constantly true)
                     :init-title-screen-fn (constantly true)
-                    :font nil})
+                    :fonts nil})
 
 (defonce state (r/atom initial-state))
 
@@ -94,49 +95,6 @@
       (getBoundingBox [this] bounding-box)
       (getBoxHelper [this] box-helper))))
 
-(defn load-font!
-  [url font-atom]
-  ($ (js/THREE.FontLoader.)
-     load
-     url
-     (fn [font]
-       (reset! font-atom font))))
-
-(defn goal
-  [font-atom text]
-  (let [geometry (js/THREE.TextGeometry. text
-                                         (clj->js {:font @font-atom
-                                                   :size 50
-                                                   :height 10}))
-        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xD4AF37}))
-        mesh (js/THREE.Mesh. geometry material)
-        object3d ($ (js/THREE.Object3D.) add mesh)
-        box-helper (js/THREE.BoxHelper. object3d 0x00ff00)
-        bounding-box (js/THREE.Box3.)]
-    (reify
-      Object
-      (getObject3d [this] object3d)
-      (getBoundingBox [this] bounding-box)
-      (getBoxHelper [this] box-helper)
-      (updateBox [this]
-        ($ box-helper update)
-        ($ bounding-box setFromObject box-helper)
-        ;;($! box-helper :visible false)
-        )
-      (intersectsBox [this box]
-        ($ (.getBoundingBox this) intersectsBox box))
-      (moveTo [this x y]
-        (let [x-center (/ (- ($ bounding-box :max.x)
-                             ($ bounding-box :min.x))
-                          2)
-              y-center (/
-                        (- ($ bounding-box :max.y)
-                           ($ bounding-box :min.y))
-                        2)]
-          ($! object3d :position.x (- x x-center))
-          ($! object3d :position.y (- y y-center))
-          (.updateBox this))))))
-
 (defn game-won-fn
   []
   (menu/menu-screen
@@ -146,7 +104,7 @@
     [{:id "play-again"
       :selected? true
       :on-click (fn [e]
-                  (@(r/cursor state [:init-game])))}
+                  (@(r/cursor state [:init-game]) state))}
      {:id "title-screen"
       :selected? false
       :on-click (fn [e]
@@ -219,7 +177,7 @@
 
 (defn ^:export init-game
   "Function to setup and start the game"
-  []
+  [state]
   (let [scene (js/THREE.Scene.)
         camera (display/init-camera!
                 (display/create-perspective-camera
@@ -236,7 +194,7 @@
         hero (hero)
         enemy (enemy)
         font-atom (r/cursor state [:font])
-        goal (goal font-atom "Goal")
+        goal (fonts/text state "helvetiker_regular.typeface.json" "Goal")
         paused? (r/cursor state [:paused?])
         key-state (r/cursor state [:key-state])
         key-state-tracker (r/cursor state [:key-state-tracker])]
@@ -268,25 +226,46 @@
                                    (reset! paused? false))}]]
      ($ js/document getElementById "reagent-app"))))
 
+(defn percent-assets-loaded
+  "Return the total amount of assets that has been loaded"
+  []
+  (let [;;textures (r/cursor state [:textures])
+        sounds (r/cursor state [:sounds])
+        fonts (r/cursor state [:fonts])
+        ;; percent-textures (/ (count @textures)
+        ;;                     (count texture-urls))
+        percent-sounds (/ (count (filter true? (map #(= ($ % state) "loaded") (vals @sounds))))
+                          (count sound/urls))
+        percent-fonts (/ (count @fonts)
+                         (count fonts/urls))]
+    (/ (+ ;;percent-textures
+          percent-sounds
+          percent-fonts)
+       ;;3
+       2
+       )))
+
+;; preserved, but not the same
 (defn load-assets-fn
   []
-  (let [font (r/cursor state [:font])]
+  (let [assets-loaded-percent (r/cursor state [:assets-loaded-percent])]
     (fn [delta-t]
-      (when-not (nil? @font)
-        (init-game)))))
+      (reset! assets-loaded-percent (percent-assets-loaded))
+      (when (=  @assets-loaded-percent 1)
+        (init-game state)))))
 
 (defn load-game-assets
   []
-  (let [font-url "fonts/helvetiker_regular.typeface.json"
-        font-atom (r/cursor state [:font])
-        time-fn (r/cursor state [:time-fn])
-        sounds (r/cursor state [:sounds])]
-    (load-font! font-url font-atom)
-    (reset! time-fn (load-assets-fn))
-    ;; sound loader
+  (let [time-fn (r/cursor state [:time-fn])
+        sounds (r/cursor state [:sounds])
+        assets-loaded-percent (r/cursor state [:assets-loaded-percent])]
+    (reset! assets-loaded-percent 0)
+    (doall (map (partial fonts/font-loader state) fonts/urls))
+;;    (doall (map (partial texture-loader state) texture-urls))
     (when ((comp not nil?) @sounds)
       (doall (map #($ % unload) (vals @sounds))))
-    (doall (map (partial sound/sound-loader state) sound/urls))))
+    (doall (map (partial sound/sound-loader state) sound/urls))
+    (reset! time-fn (load-assets-fn))))
 
 (defn title-screen-fn
   []
@@ -304,7 +283,7 @@
                       {:id "bar"
                        :selected? false
                        :on-click (fn [e]
-                                   ($ js/console log "foo"))}])))
+                                   ($ js/console log "bar"))}])))
 
 (defn ^:export init-title-screen
   []
