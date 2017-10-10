@@ -36,8 +36,7 @@
 (defn enemy
   [{:keys [texture height width]
     :or {height 100
-         width 100
-         texture nil}}]
+         width 100}}]
   (let [geometry (js/THREE.PlaneGeometry. height width 1)
         material (js/THREE.MeshBasicMaterial. (if (nil? texture)
                                                 (clj->js {:color 0xFF0000})
@@ -82,3 +81,18 @@
             ($ this-object position.add
                ($ this->hero multiplyScalar dL))
             (.updateBox this)))))))
+
+(defn origin
+  "Useful object for displaying the origin"
+  []
+  (let [geometry (js/THREE.PlaneGeometry. 5 5 1)
+        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xff0000}))
+        mesh (js/THREE.Mesh. geometry material)
+        bounding-box (js/THREE.Box3.)
+        object3d ($ (js/THREE.Object3D.) add mesh)
+        box-helper (js/THREE.BoxHelper. object3d 0x00ff00)
+        move-increment 5
+        _ ($! object3d :position.x 0)
+        _ ($! object3d :position.y 0)
+        _ ($! object3d :position.z 1)]
+    object3d))

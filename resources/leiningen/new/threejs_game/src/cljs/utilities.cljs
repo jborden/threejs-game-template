@@ -1,6 +1,7 @@
 (ns {{project-ns}}.utilities
     (:require-macros [reagent.interop :refer [$ $!]])
-    (:require [goog.string.path]))
+    (:require [cljsjs.three]
+              [goog.string.path]))
 
 (defn calculate-distance
   "Given two THREE.Object3d objects, calculate the distance between them"
@@ -56,3 +57,15 @@
   (-> field
       ($ :target)
       ($ :value)))
+
+(defn plane->bounding-box
+  "Given an object3d that represents a simple plane, return a bounding box for it"
+  [plane]
+  (let [bounding-box (js/THREE.Box3.)]
+    ($ bounding-box setFromObject plane)
+    bounding-box))
+
+(defn contains-point?
+  "Does object's bounding box contain point?"
+  [point object]
+  ($ (.getBoundingBox object) containsPoint point))
