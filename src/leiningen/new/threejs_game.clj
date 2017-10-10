@@ -34,6 +34,7 @@
              ["src/cljs/{{sanitized}}/cookies.cljs" (render "src/cljs/cookies.cljs" data)]
              ["src/cljs/{{sanitized}}/sounds.cljs" (render "src/cljs/sounds.cljs" data)]
              ["src/cljs/{{sanitized}}/fonts.cljs" (render "src/cljs/fonts.cljs" data)]
+             ["src/cljs/{{sanitized}}/objects.cljs" (render "src/cljs/objects.cljs" data)]
              ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]
              ["resources/public/index.html" (render "resources/public/index.html" data)]
              ["resources/public/index_release.html" (render "resources/public/index_release.html" data)]
