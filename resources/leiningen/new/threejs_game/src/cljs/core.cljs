@@ -7,7 +7,7 @@
             [{{project-ns}}.display :as display]
             [{{project-ns}}.fonts :as fonts]
             [{{project-ns}}.menu :as menu]
-            [{{project-ns}}.sound :as sound]
+            [{{project-ns}}.sounds :as sounds]
             [{{project-ns}}.time-loop :as time-loop]
             [{{project-ns}}.utilities :as utilities]))
 
@@ -151,10 +151,10 @@
     (fn [delta-t]
       (@render-fn)
       (when (.intersectsBox @goal (.getBoundingBox @hero))
-        (sound/play-sound state "Powerup9.wav")
+        (sounds/play-sound state "Powerup9.wav")
         (init-game-won-screen))
       (when (.intersectsBox @enemy (.getBoundingBox @hero))
-        (sound/play-sound state "Hit_Hurt19.wav")
+        (sounds/play-sound state "Hit_Hurt19.wav")
         (init-game-lost-screen))
       ;; p-key is up, reset the delay
       (if (not (:p @key-state))
@@ -235,7 +235,7 @@
         ;; percent-textures (/ (count @textures)
         ;;                     (count texture-urls))
         percent-sounds (/ (count (filter true? (map #(= ($ % state) "loaded") (vals @sounds))))
-                          (count sound/urls))
+                          (count sounds/urls))
         percent-fonts (/ (count @fonts)
                          (count fonts/urls))]
     (/ (+ ;;percent-textures
@@ -264,7 +264,7 @@
 ;;    (doall (map (partial texture-loader state) texture-urls))
     (when ((comp not nil?) @sounds)
       (doall (map #($ % unload) (vals @sounds))))
-    (doall (map (partial sound/sound-loader state) sound/urls))
+    (doall (map (partial sounds/sound-loader state) sounds/urls))
     (reset! time-fn (load-assets-fn))))
 
 (defn title-screen-fn

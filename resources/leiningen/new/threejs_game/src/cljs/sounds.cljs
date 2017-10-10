@@ -1,4 +1,4 @@
-(ns {{project-ns}}.sound
+(ns {{project-ns}}.sounds
     (:require-macros [reagent.interop :refer [$]])
     (:require [reagent.core :as r]
               [cljsjs.howler]
