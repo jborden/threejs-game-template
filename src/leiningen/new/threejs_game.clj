@@ -33,8 +33,10 @@
              ["src/cljs/{{sanitized}}/xhr.cljs" (render "src/cljs/xhr.cljs" data)]
              ["src/cljs/{{sanitized}}/cookies.cljs" (render "src/cljs/cookies.cljs" data)]
              ["src/cljs/{{sanitized}}/sounds.cljs" (render "src/cljs/sounds.cljs" data)]
+             ["src/cljs/{{sanitized}}/textures.cljs" (render "src/cljs/textures.cljs" data)]
              ["src/cljs/{{sanitized}}/fonts.cljs" (render "src/cljs/fonts.cljs" data)]
              ["src/cljs/{{sanitized}}/objects.cljs" (render "src/cljs/objects.cljs" data)]
+
              ["src/js/{{sanitized}}.externs.js" (render "src/js/externs.js" data)]
              ["resources/public/index.html" (render "resources/public/index.html" data)]
              ["resources/public/index_release.html" (render "resources/public/index_release.html" data)]
@@ -42,6 +44,8 @@
              ["resources/public/css/{{sanitized}}.css" (render "resources/public/css/main.css" data)]
              ["resources/public/fonts/helvetiker_regular.typeface.json" (render "resources/public/fonts/helvetiker_regular.typeface.json" data)]
              ["resources/public/server.js" (render "resources/public/server.js" data)]
+
              ["resources/public/audio/Hit_Hurt19.wav" (binary "resources/public/audio/Hit_Hurt19.wav")]
              ["resources/public/audio/Powerup9.wav" (binary "resources/public/audio/Powerup9.wav")]
+             ["resources/public/images/enemy.png" (binary "resources/public/images/enemy.png")]
              )))

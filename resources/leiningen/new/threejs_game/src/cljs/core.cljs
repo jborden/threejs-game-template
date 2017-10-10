@@ -9,6 +9,7 @@
             [{{project-ns}}.menu :as menu]
             [{{project-ns}}.objects :as objects]
             [{{project-ns}}.sounds :as sounds]
+            [{{project-ns}}.textures :as textures]
             [{{project-ns}}.time-loop :as time-loop]
             [{{project-ns}}.utilities :as utilities]))
 
@@ -120,7 +121,7 @@
         render-fn (display/render renderer scene camera)
         time-fn (r/cursor state [:time-fn])
         hero (objects/hero)
-        enemy (objects/enemy)
+        enemy (objects/enemy {:texture @(r/cursor state [:textures "enemy.png"])})
         font-atom (r/cursor state [:font])
         goal (fonts/text state "helvetiker_regular.typeface.json" "Goal")
         paused? (r/cursor state [:paused?])
@@ -157,21 +158,19 @@
 (defn percent-assets-loaded
   "Return the total amount of assets that has been loaded"
   []
-  (let [;;textures (r/cursor state [:textures])
+  (let [textures (r/cursor state [:textures])
         sounds (r/cursor state [:sounds])
         fonts (r/cursor state [:fonts])
-        ;; percent-textures (/ (count @textures)
-        ;;                     (count texture-urls))
+        percent-textures (/ (count @textures)
+                            (count textures/urls))
         percent-sounds (/ (count (filter true? (map #(= ($ % state) "loaded") (vals @sounds))))
                           (count sounds/urls))
         percent-fonts (/ (count @fonts)
                          (count fonts/urls))]
-    (/ (+ ;;percent-textures
+    (/ (+ percent-textures
           percent-sounds
           percent-fonts)
-       ;;3
-       2
-       )))
+       3)))
 
 ;; preserved, but not the same
 (defn load-assets-fn
@@ -189,7 +188,7 @@
         assets-loaded-percent (r/cursor state [:assets-loaded-percent])]
     (reset! assets-loaded-percent 0)
     (doall (map (partial fonts/font-loader state) fonts/urls))
-;;    (doall (map (partial texture-loader state) texture-urls))
+    (doall (map (partial textures/texture-loader state) textures/urls))
     (when ((comp not nil?) @sounds)
       (doall (map #($ % unload) (vals @sounds))))
     (doall (map (partial sounds/sound-loader state) sounds/urls))

@@ -34,9 +34,16 @@
       (getBoxHelper [this] box-helper))))
 
 (defn enemy
-  []
-  (let [geometry (js/THREE.PlaneGeometry. 100 100 1)
-        material (js/THREE.MeshBasicMaterial. (clj->js {:color 0xFF0000}))
+  [{:keys [texture height width]
+    :or {height 100
+         width 100
+         texture nil}}]
+  (let [geometry (js/THREE.PlaneGeometry. height width 1)
+        material (js/THREE.MeshBasicMaterial. (if (nil? texture)
+                                                (clj->js {:color 0xFF0000})
+                                                (clj->js {:map texture
+                                                          :side js/THREE.DoubleSide
+                                                          :transparent true})))
         mesh (js/THREE.Mesh. geometry material)
         object3d ($ (js/THREE.Object3D.) add mesh)
         box-helper (js/THREE.BoxHelper. object3d 0x00ff00)
