@@ -5,6 +5,7 @@
                  [org.clojure/clojurescript "1.9.946"]
                  [cljsjs/three "0.0.87-0"]
                  [cljsjs/howler "2.0.5-0"]
+                 [cljsjs/stats "16.0-0"]
                  [reagent "0.8.0-alpha1"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.14"]]

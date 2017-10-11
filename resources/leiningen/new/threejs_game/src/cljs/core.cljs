@@ -2,6 +2,7 @@
   (:require-macros [reagent.interop :refer [$ $!]])
   (:require [reagent.core :as r]
             [cljsjs.three]
+            [cljsjs.stats]
             [{{project-ns}}.components :refer [PauseComponent TitleScreen GameContainer GameWonScreen GameLostScreen AssetLoadingComponent]]
             [{{project-ns}}.controls :as controls]
             [{{project-ns}}.display :as display]
@@ -112,9 +113,14 @@
         paused? (r/cursor state [:paused?])
         key-state (r/cursor state [:key-state])
         ticks-max 20
-        ticks-counter (r/cursor state [:ticks-counter])]
+        ticks-counter (r/cursor state [:ticks-counter])
+        stats (r/cursor state [:stats])]
     (fn [delta-t]
+      ;; comment out for release
+      ($ @stats begin)
       (@render-fn)
+      ;; comment out for release
+      ($ @stats end)
       (when (.intersectsBox @goal (.getBoundingBox @hero))
         (sounds/play-sound state "Powerup9.wav")
         (init-game-won-screen))
@@ -246,7 +252,17 @@
         init-game-fn (r/cursor state [:init-game])
         key-state (r/cursor state [:key-state])
         init-game-won-fn (r/cursor state [:init-game-won-fn])
-        init-title-screen-fn (r/cursor state [:init-title-screen-fn])]
+        init-title-screen-fn (r/cursor state [:init-title-screen-fn])
+        stats (r/cursor state [:stats])]
+    ;; setup options stats monitor, comment out for release
+    (reset! stats (js/Stats.))
+    ;; turn on stats for fps
+    ;; 0: fps, 1: ms, 2: mb, 3+: custom
+    ($ @stats showPanel 0)
+    ;; attach to the body
+    (-> ($ js/document :body)
+        ($ appendChild ($ @stats :dom)))
+
     ;; start controls listeners
     (controls/initialize-key-listeners! key-state)
     ;; set init-fn's
