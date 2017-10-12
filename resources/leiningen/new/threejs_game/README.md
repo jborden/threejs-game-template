@@ -62,3 +62,8 @@ in online cljs tutorials. The provided externs files has examples of doing this 
 but are not included in cljsjs/three externs.
 
 Note: The project begins with no errors at the command line or in the console.
+
+## Useful Links
+
+Check Game Pads
+http://html5gamepad.com/
